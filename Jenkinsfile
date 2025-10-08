@@ -5,7 +5,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'git@github.com:rahulagarwal-wtg/playwright-demo-repo.git',
+                    url: 'git@github.com-ragarwal:ragarwal867/automation_playwright_personal.git',
                     credentialsId: 'github-ssh'
             }
         }
