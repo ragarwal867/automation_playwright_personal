@@ -7,8 +7,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'git@github.com:ragarwal867/automation_playwright_personal.git',
-                    credentialsId: 'github-ssh-personal'
+                    url: 'https://github.com/ragarwal867/automation_playwright_personal.git',
+                    credentialsId: 'github-token-personal'
             }
         }
         stage('Build & Test') {
