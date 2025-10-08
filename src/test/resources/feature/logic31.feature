@@ -1,4 +1,4 @@
-@regression @gtee
+@regression @ubs @correctInstrument @smoke
 Feature: Google Search 31
 
   Scenario: Navigate to Google

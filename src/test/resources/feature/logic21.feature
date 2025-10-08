@@ -1,4 +1,4 @@
-@regression @admin
+@regression @ubs @admin @smoke
 Feature: Google Search 21
 
   Scenario: Navigate to Google

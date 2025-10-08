@@ -1,4 +1,4 @@
-@regression @gtee
+@regression @galileo @correctInstrument
 Feature: Google Search 27
 
   Scenario: Navigate to Google

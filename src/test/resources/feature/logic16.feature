@@ -1,4 +1,4 @@
-@regression @admin
+@regression @ubs @admin
 Feature: Google Search 16
 
   Scenario: Navigate to Google

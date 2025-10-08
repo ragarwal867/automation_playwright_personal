@@ -1,4 +1,4 @@
-@regression @lc
+@regression @onboarding
 Feature: Google Search 24
 
   Scenario: Navigate to Google

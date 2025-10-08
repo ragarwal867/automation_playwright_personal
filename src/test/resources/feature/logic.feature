@@ -1,4 +1,4 @@
-@regression @gtee
+@regression @galileo @gtee
 Feature: Google Search
 
   Scenario: Navigate to Google

@@ -1,4 +1,4 @@
-@regression @gtee
+@regression @ubs @user
 Feature: Google Search 17
 
   Scenario: Navigate to Google

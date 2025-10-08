@@ -1,4 +1,4 @@
-@regression @lc
+@regression @galieo @smoke
 Feature: Google Search 5
 
   Scenario: Navigate to Google

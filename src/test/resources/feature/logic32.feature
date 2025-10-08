@@ -1,4 +1,4 @@
-@regression @lc
+@regression @galieo @lc
 Feature: Google Search 32
 
   Scenario: Navigate to Google

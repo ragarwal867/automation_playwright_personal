@@ -1,4 +1,4 @@
-@regression @lc
+@regression @galileo @lc
 Feature: Google Search 18
 
   Scenario: Navigate to Google

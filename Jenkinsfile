@@ -16,10 +16,5 @@ pipeline {
                 sh 'mvn clean install -B'
             }
         }
-        stage('Report') {
-            steps {
-                cucumber buildStatus: 'UNSTABLE', fileIncludePattern: '**/cucumber.json'
-            }
-        }
     }
 }

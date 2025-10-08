@@ -1,4 +1,4 @@
-@regression @lc
+@regression @migration @smoke
 Feature: Google Search 25
 
   Scenario: Navigate to Google

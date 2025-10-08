@@ -1,4 +1,4 @@
-@regression @epres
+@regression @galileo @epres
 Feature: Google Search 3
 
   Scenario: Navigate to Google 2

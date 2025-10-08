@@ -1,4 +1,4 @@
-@regression @admin
+@regression @galileo @addressbook
 Feature: Google Search 26
 
   Scenario: Navigate to Google

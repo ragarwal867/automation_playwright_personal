@@ -1,4 +1,4 @@
-@regression @lc
+@regression @galileo @admin @smoke
 Feature: Google Search 20
 
   Scenario: Navigate to Google

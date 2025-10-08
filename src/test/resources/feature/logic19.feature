@@ -1,4 +1,4 @@
-@regression @epres
+@regression @ubs @epres @smoke
 Feature: Google Search 19
 
   Scenario: Navigate to Google

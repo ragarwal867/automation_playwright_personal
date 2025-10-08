@@ -1,4 +1,4 @@
-@regression @epres
+@regression @galieo @epres
 Feature: Google Search 23
 
   Scenario: Navigate to Google 2

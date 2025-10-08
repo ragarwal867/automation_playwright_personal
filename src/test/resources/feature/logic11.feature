@@ -1,4 +1,4 @@
-@regression @gtee
+@regression @ubs @gtee
 Feature: Google Search 11
 
   Scenario: Navigate to Google

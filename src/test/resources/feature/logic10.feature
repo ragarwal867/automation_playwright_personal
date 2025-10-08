@@ -1,4 +1,4 @@
-@regression @lc
+@regression @ubs @lc
 Feature: Google Search 10
 
   Scenario: Navigate to Google
