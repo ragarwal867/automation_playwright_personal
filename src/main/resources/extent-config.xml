@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extentreports>
+  <configuration>
+    <!-- report theme -->
+
+    <!-- standard, dark -->
+
+    <documentTitle>APP</documentTitle>
+    <!-- document encoding -->
+
+    <!-- defaults to UTF-8 -->
+
+    <encoding>UTF-8</encoding>
+    <!-- protocol for script and stylesheets -->
+
+    <!-- defaults to https -->
+
+    <protocol>http</protocol>
+    <!-- title of the document -->
+    <reportName>APP Report</reportName>
+    <!-- report name - displayed at top-nav -->
+
+    <scripts>
+
+      <![CDATA[
+$(document).ready(function() {
+});
+]]>
+    </scripts>
+    <!-- location of charts in the test view -->
+
+    <!-- top, bottom -->
+
+    <styles>
+      <![CDATA[
+]]>
+    </styles>
+    <!-- custom javascript -->
+
+    <testViewChartLocation>bottom</testViewChartLocation>
+    <!-- custom styles -->
+    <theme>dark</theme>
+  </configuration>
+</extentreports>
