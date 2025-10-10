@@ -26,8 +26,8 @@ public class Hooks {
         this.context = context;
     }
 
-//    @BeforeAll
-//    public void beforeAllScenarios() {
+    //    @BeforeAll
+//    public static void beforeAllScenarios() {
 //        try {
 //            report = new TestReport().setStart(LocalDateTime.now(ZoneOffset.UTC));
 //            TestReportHtmlGenerator.generateHtmlReport(report);
@@ -46,9 +46,22 @@ public class Hooks {
         if (report == null) {
             report = new TestReport().setStart(LocalDateTime.now(ZoneOffset.UTC));
             TestReportHtmlGenerator.generateHtmlReport(report);
-            try {
-                ResultApiClient.getInstance().sendTestRunDetails(report);
-            } catch (Exception ignored) {}
+            boolean success = false;
+            int retries = 3;
+            while (!success && retries > 0) {
+                try {
+                    ResultApiClient.getInstance().sendTestRunDetails(report);
+                    success = true;
+                } catch (Exception e) {
+                    retries--;
+                    Logger.logError("Failed to create TestRun entry. Retries left: " + retries + ". Error: " + e.getMessage());
+                    try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+                }
+            }
+
+            if (!success) {
+                throw new RuntimeException("Cannot initialize TestRun after retries. Aborting tests.");
+            }
         }
     }
 
