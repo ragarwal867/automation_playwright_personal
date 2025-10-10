@@ -1,4 +1,4 @@
-@regression @ubs @lc
+@regression @galileo @correctInstrument
 Feature: Google Search 12
 
   Scenario: Navigate to Google 121

@@ -13,6 +13,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.nio.file.Paths;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -60,8 +61,12 @@ public class ScenarioResult {
 
     public static class ScenarioResultBuilder {
         public ScenarioResultBuilder usingScenario(Scenario scenario) {
+            String relativePath = Paths.get(System.getProperty("user.dir"))
+                    .relativize(Paths.get(scenario.getUri()))
+                    .toString();
+
             this.testId(scenario.getId())
-                    .uri(scenario.getUri().toString())
+                    .uri(relativePath)
                     .lineNumber(scenario.getLine())
                     .tags(
                             scenario.getSourceTagNames().stream()

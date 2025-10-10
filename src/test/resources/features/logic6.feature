@@ -1,4 +1,4 @@
-@regression @galileo @admin
+@regression @ubs @lc
 Feature: Google Search 6
 
   Scenario: Navigate to Google 61

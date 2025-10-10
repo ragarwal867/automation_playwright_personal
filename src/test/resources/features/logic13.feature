@@ -1,4 +1,4 @@
-@regression @ubs @epres
+@regression @galileo @addressbook
 Feature: Google Search 13
 
   Scenario: Navigate to Google 131

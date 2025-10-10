@@ -1,4 +1,4 @@
-@regression @ubs @lc
+@regression @galileo @conversation
 Feature: Google Search 10
 
   Scenario: Navigate to Google 101

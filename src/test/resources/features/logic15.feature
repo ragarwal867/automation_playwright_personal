@@ -1,4 +1,4 @@
-@regression @galileo @lc
+@regression @onboarding
 Feature: Google Search 15
 
   Scenario: Navigate to Google 151

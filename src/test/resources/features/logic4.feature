@@ -1,4 +1,4 @@
-@regression @galileo @lc
+@regression @galileo @administration
 Feature: Google Search 4
 
   Scenario: Navigate to Google 41

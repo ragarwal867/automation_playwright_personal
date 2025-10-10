@@ -1,4 +1,4 @@
-@regression @ubs @lc
+@regression @ubs @epres
 Feature: Google Search 8
 
   Scenario: Navigate to Google 81

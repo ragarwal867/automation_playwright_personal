@@ -1,4 +1,4 @@
-@regression @galileo @lc
+@regression @migration
 Feature: Google Search 14
 
   Scenario: Navigate to Google 141

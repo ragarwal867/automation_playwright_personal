@@ -1,4 +1,4 @@
-@regression @ubs @epres
+@regression @ubs @administration
 Feature: Google Search 9
 
   Scenario: Navigate to Google 91
