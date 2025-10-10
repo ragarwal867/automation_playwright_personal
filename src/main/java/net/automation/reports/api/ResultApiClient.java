@@ -17,7 +17,7 @@ import java.time.ZoneOffset;
 public class ResultApiClient {
     @Getter
     private static final ResultApiClient instance = new ResultApiClient();
-    public static final String URL = "resultApi.url";
+    public static final String URL = "http://localhost:8090/";
     public static final String RUN_TYPE = "runType";
     public static final String BUILD_NUMBER = "buildNumber";
     public static final String PARENT_BUILD_NUMBER = "parentBuildNumber";
@@ -34,19 +34,18 @@ public class ResultApiClient {
 
 
     public void sendScenarioResult(TestReport report, TestScenario testScenario, Scenario scenario) {
-        if (resultApiIsConfigured()) {
-            String message = createScenarioMessage(report, testScenario, scenario);
-            log.info(message);
-            send(message, SCENARIO_RECORD_ENDPOINT);
-        }
+
+        String message = createScenarioMessage(report, testScenario, scenario);
+        log.info(message);
+        send(message, SCENARIO_RECORD_ENDPOINT);
+
     }
 
     public void sendTestRunDetails(TestReport report) {
-        if (resultApiIsConfigured()) {
-            String message = createRunMessage(report);
-            log.info(message);
-            send(message, TEST_RUN_START_ENDPOINT);
-        }
+        String message = createRunMessage(report);
+        log.info(message);
+        send(message, TEST_RUN_START_ENDPOINT);
+
     }
 
     private static String createScenarioMessage(TestReport report, TestScenario testScenario, Scenario scenario) {
@@ -95,7 +94,7 @@ public class ResultApiClient {
     }
 
     private String getUrl(String endpoint) {
-        return config.getProperty(URL) + endpoint;
+        return URL + endpoint;
     }
 
     private void send(String message, String endpoint) {
