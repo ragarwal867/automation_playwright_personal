@@ -89,10 +89,6 @@ public class ResultApiClient {
         return TypeHelper.convertToJson(payload);
     }
 
-    public boolean resultApiIsConfigured() {
-        return config.hasProperty(URL);
-    }
-
     private String getUrl(String endpoint) {
         return URL + endpoint;
     }

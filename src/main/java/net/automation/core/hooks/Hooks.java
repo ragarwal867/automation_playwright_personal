@@ -22,33 +22,51 @@ public class Hooks {
 
     private ScenarioContext context;
 
-    static {
-        beforeAllScenarios();
-    }
-
     public Hooks(ScenarioContext context) {
         this.context = context;
     }
 
-    public static void beforeAllScenarios() {
-        report = new TestReport().setStart(LocalDateTime.now(ZoneOffset.UTC));
-        TestReportHtmlGenerator.generateHtmlReport(report);
-        ResultApiClient.getInstance().sendTestRunDetails(report);
+//    @BeforeAll
+//    public void beforeAllScenarios() {
+//        try {
+//            report = new TestReport().setStart(LocalDateTime.now(ZoneOffset.UTC));
+//            TestReportHtmlGenerator.generateHtmlReport(report);
+//            // Safe call: wrap in try-catch
+//            try {
+//                ResultApiClient.getInstance().sendTestRunDetails(report);
+//            } catch (Exception e) {
+//                logError("Failed to send test run details: " + e.getMessage());
+//            }
+//        } catch (Exception e) {
+//            logError("Cannot initialize TestReport: " + e.getMessage());
+//        }
+//    }
+
+    private static void initReport() {
+        if (report == null) {
+            report = new TestReport().setStart(LocalDateTime.now(ZoneOffset.UTC));
+            TestReportHtmlGenerator.generateHtmlReport(report);
+            try {
+                ResultApiClient.getInstance().sendTestRunDetails(report);
+            } catch (Exception ignored) {}
+        }
     }
 
     @AfterAll
     public static void afterAllScenarios() {
         try {
-            Logger.logInfo("After all scenarios");
-            report.setEnd(LocalDateTime.now(ZoneOffset.UTC));
-            TestReportHtmlGenerator.generateHtmlReport(report);
+            if (report != null) {
+                report.setEnd(LocalDateTime.now(ZoneOffset.UTC));
+                TestReportHtmlGenerator.generateHtmlReport(report);
+            }
         } catch (Exception e) {
-            logError("Cannot invoke afterAllScenarios. Details: " + e.getMessage());
+            logError("Cannot finalize TestReport: " + e.getMessage());
         }
     }
 
     @Before
     public void beforeScenario(Scenario scenario) {
+        initReport();
         logInfo("Start scenario: %s".formatted(scenario.getName()));
         TestScenario testScenario = (new TestScenario()).setName(scenario.getName()).setStart(LocalDateTime.now(ZoneOffset.UTC)).setStatus(TestStatus.IN_PROGRESS);
         context.setTestScenario(testScenario);
