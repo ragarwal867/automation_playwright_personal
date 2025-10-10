@@ -34,16 +34,13 @@ public class ResultApiClient {
 
 
     public void sendScenarioResult(TestReport report, TestScenario testScenario, Scenario scenario) {
-
         String message = createScenarioMessage(report, testScenario, scenario);
-        log.info(message);
         send(message, SCENARIO_RECORD_ENDPOINT);
 
     }
 
     public void sendTestRunDetails(TestReport report) {
         String message = createRunMessage(report);
-        log.info(message);
         send(message, TEST_RUN_START_ENDPOINT);
 
     }
