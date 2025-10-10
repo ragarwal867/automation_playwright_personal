@@ -6,9 +6,18 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/ragarwal867/automation_playwright_personal.git',
-                    credentialsId: 'github-token-personal'
+               checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/ragarwal867/automation_playwright_personal.git',
+                        credentialsId: 'github-token-personal'
+                   ]],
+                   extensions: [
+                        [$class: 'CleanBeforeCheckout'],
+                        [$class: 'CloneOption', depth: 0, noTags: false, shallow: false]
+                  ]
+              ])
             }
         }
         stage('Build & Test') {
