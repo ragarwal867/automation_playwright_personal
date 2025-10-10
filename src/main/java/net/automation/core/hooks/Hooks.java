@@ -34,7 +34,7 @@ public class Hooks {
         // Reporting
         report = new TestReport().setStart(LocalDateTime.now(ZoneOffset.UTC));
         TestReportHtmlGenerator.generateHtmlReport(report);
-//        ResultApiClient.getInstance().sendTestRunDetails(report);
+        ResultApiClient.getInstance().sendTestRunDetails(report);
     }
 
     @AfterAll
@@ -76,7 +76,7 @@ public class Hooks {
         TestReportHtmlGenerator.generateHtmlReport(report);
         Logger.clearLogs();
 
-//        ResultApiClient.getInstance().sendScenarioResult(report, context.getTestScenario(), scenario);
+        ResultApiClient.getInstance().sendScenarioResult(report, context.getTestScenario(), scenario);
     }
 
     @BeforeStep
