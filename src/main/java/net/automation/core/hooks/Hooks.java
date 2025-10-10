@@ -31,7 +31,6 @@ public class Hooks {
     }
 
     public static void beforeAllScenarios() {
-        // Reporting
         report = new TestReport().setStart(LocalDateTime.now(ZoneOffset.UTC));
         TestReportHtmlGenerator.generateHtmlReport(report);
         ResultApiClient.getInstance().sendTestRunDetails(report);

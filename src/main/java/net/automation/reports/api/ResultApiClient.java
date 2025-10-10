@@ -55,10 +55,10 @@ public class ResultApiClient {
 
         TestRun payloadTest = new TestRun()
                 .setDatetimeStart(report.getStart().toInstant(ZoneOffset.UTC))
-                .setServer(System.getProperty(BUILD_ENVIRONMENT, "ad hoc"))
-                .setRunType(System.getProperty(RUN_TYPE, "ad hoc"))
-                .setBranch(System.getProperty(RUN_BRANCH, "ad hoc"))
-                .setBuildNumber(Integer.valueOf(System.getProperty(BUILD_NUMBER, "ad hoc")));
+                .setServer(System.getProperty(BUILD_ENVIRONMENT, "Demo"))
+                .setRunType(System.getProperty(RUN_TYPE, "Galileo"))
+                .setBranch(System.getProperty(RUN_BRANCH, "develop"))
+                .setBuildNumber(Integer.valueOf(System.getProperty(BUILD_NUMBER, "1")));
 
         payloadScenarioResult.setTestRun(payloadTest);
 
