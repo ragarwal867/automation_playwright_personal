@@ -79,7 +79,11 @@ pipeline {
         stage('Regression') {
             steps {
                 script {
-                    parallel buildRegressionParallelStages()
+                     def regressionTests = getRegressionTestConfig()
+                        regressionTests.each { moduleName, testConfig ->
+                            echo "=== Running Regression for ${moduleName} ==="
+                            runTestStage(moduleName, testConfig.tags)
+                     }
                 }
             }
         }
