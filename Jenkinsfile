@@ -18,6 +18,7 @@ def getRegressionTestConfig() {
 
 def runTestStage(String testReportName, String gherkinTags) {
     echo "Running test stage: ${testReportName}"
+    echo "Running test tags: ${gherkinTags}"
 
     sh """
         mvn --fail-never test -B \
@@ -28,6 +29,7 @@ def runTestStage(String testReportName, String gherkinTags) {
         -Dsysteminfo.AppName=${testReportName}
     """
     echo "Stage ${testReportName} completed"
+    echo ""
 }
 
 pipeline {
