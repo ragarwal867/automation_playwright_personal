@@ -1,36 +1,34 @@
 import java.time.Duration
 
-def CONTROLLER = 'master'
-def AGENT = 'playwright'
-
-@NonCPS
-def agentRunners() {
-    return ['playwright-runner-02']
-}
-
 @NonCPS
 def getRegressionTestConfig() {
         return [
-            UBS               : [agent: 'playwright-runner-02', tags: '@regression and @ubs'],
-            EPRES             : [agent: 'playwright-runner-02', tags: '@regression and @galileo and @epres'],
-            ADMINISTRATION    : [agent: 'playwright-runner-02', tags: '@regression and @galileo and @administration'],
-            HELP              : [agent: 'playwright-runner-02', tags: '@regression and @galileo and @help'],
-            GTEE              : [agent: 'playwright-runner-02', tags: '@regression and @galileo and @gtee'],
-            LC                : [agent: 'playwright-runner-02', tags: '@regression and @galileo and @lc'],
-            CONVERSATION      : [agent: 'playwright-runner-02', tags: '@regression and @galileo and @conversation'],
-            MLA               : [agent: 'playwright-runner-02', tags: '@regression and @galileo and @mla'],
-            CORRECT_INSTRUMENT: [agent: 'playwright-runner-02', tags: '@regression and @galileo and @correctInstrument'],
-            ADDRESS_BOOK      : [agent: 'playwright-runner-02', tags: '@regression and @galileo and @addressbook'],
-            MIGRATION         : [agent: 'playwright-runner-02', tags: '@regression and @migration'],
-            ONBOARDING        : [agent: 'playwright-runner-02', tags: '@regression and @onboarding']
+            UBS               : [tags: '@regression and @ubs'],
+            EPRES             : [tags: '@regression and @galileo and @epres'],
+            ADMINISTRATION    : [tags: '@regression and @galileo and @administration'],
+            HELP              : [tags: '@regression and @galileo and @help'],
+            GTEE              : [tags: '@regression and @galileo and @gtee'],
+            LC                : [tags: '@regression and @galileo and @lc'],
+            CONVERSATION      : [tags: '@regression and @galileo and @conversation'],
+            MLA               : [tags: '@regression and @galileo and @mla'],
+            CORRECT_INSTRUMENT: [tags: '@regression and @galileo and @correctInstrument'],
+            ADDRESS_BOOK      : [tags: '@regression and @galileo and @addressbook'],
+            MIGRATION         : [tags: '@regression and @migration'],
+            ONBOARDING        : [tags: '@regression and @onboarding']
         ]
 }
 
 def buildRef() { "${currentBuild.number}-${params.ENVIRONMENT}" }
 
+def formatBuildDuration(long durationMillis) {
+    def duration = Duration.ofMillis(durationMillis)
+    return String.format("%02dh %02dm %02ds",
+        duration.toHoursPart(), duration.toMinutesPart(), duration.toSecondsPart()
+    )
+}
+
 def initializeBuildStage() {
     env.DATE = new Date().format("yyyy-MM-dd")
-    cleanControllerWorkspace()
     echo "Initializing build : ${buildRef()}"
     currentBuild.displayName = buildRef()
 }
@@ -53,8 +51,6 @@ def withTools(Closure body) {
 }
 
 def runTestStage(String testReportName, String gherkinTags) {
-    def configFileName = "config/config_${params.ENVIRONMENT}.properties"
-    def testOutputDirectory = "test-output/${testReportName}"
     def remoteFlag = "false"
     def headlessFlag = "true"
 
@@ -73,8 +69,6 @@ def runTestStage(String testReportName, String gherkinTags) {
         -Dsysteminfo.AppName=${testReportName} \
         -Dscreenshot.rel.path=Screenshots/ \
     """
-
-    def latestTestOutputDirectory = sh(script: "ls -d ${testOutputDirectory}* | sort | tail -n 1", returnStdout: true).trim()
 
     def durationMillis = System.currentTimeMillis() - startTime
     def formattedDuration = formatBuildDuration(durationMillis)
@@ -133,7 +127,6 @@ pipeline {
             }
         }
         stage('Init') {
-            agent { label CONTROLLER }
             steps {
                 script {
                     initializeBuildStage()
@@ -158,10 +151,8 @@ pipeline {
 
     post {
         always {
-            node(CONTROLLER) {
-                script {
-                    echo "Skipping post-build actions."
-                }
+            script {
+                echo "Skipping post-build actions."
             }
         }
     }
