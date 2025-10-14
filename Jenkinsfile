@@ -1,5 +1,3 @@
-import java.time.Duration
-
 @NonCPS
 def getRegressionTestConfig() {
     return [
@@ -18,17 +16,9 @@ def getRegressionTestConfig() {
     ]
 }
 
-def formatBuildDuration(long durationMillis) {
-    def duration = Duration.ofMillis(durationMillis)
-    return String.format("%02dh %02dm %02ds",
-        duration.toHoursPart(), duration.toMinutesPart(), duration.toSecondsPart()
-    )
-}
-
 def runTestStage(String testReportName, String gherkinTags) {
     echo "Running test stage: ${testReportName}"
 
-    def startTime = System.currentTimeMillis()
     sh """
         mvn --fail-never test -B \
         -Duser.timezone=UTC \
@@ -37,8 +27,7 @@ def runTestStage(String testReportName, String gherkinTags) {
         -Dcucumber.filter.tags='${gherkinTags}' \
         -Dsysteminfo.AppName=${testReportName}
     """
-    def durationMillis = System.currentTimeMillis() - startTime
-    echo "Stage ${testReportName} completed in ${formatBuildDuration(durationMillis)}"
+    echo "Stage ${testReportName} completed"
 }
 
 pipeline {
