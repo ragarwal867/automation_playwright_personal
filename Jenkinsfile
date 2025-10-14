@@ -137,9 +137,6 @@ pipeline {
                 ])
             }
         }
-        stage('Validation') {
-            agent { label AGENT }
-        }
         stage('Init') {
             agent { label CONTROLLER }
             steps {
