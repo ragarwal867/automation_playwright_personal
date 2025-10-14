@@ -45,7 +45,7 @@ def buildRegressionParallelStages() {
     def parallelStages = [:]
     getRegressionTestConfig().each { moduleName, testConfig ->
         parallelStages[moduleName] = {
-            node('any') {  // Avoid testConfig.agent=null
+            node('master') {
                 runTestStage(moduleName, testConfig.tags)
             }
         }
