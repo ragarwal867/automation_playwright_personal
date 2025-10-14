@@ -109,16 +109,11 @@ def buildRegressionParallelStages() {
 }
 
 pipeline {
-    agent none
+    agent any
 
     environment {
-            GIT_SSH_COMMAND = 'ssh -o StrictHostKeyChecking=no'
-            SKIP_BUILD = 'false'
+        GIT_SSH_COMMAND = 'ssh -o StrictHostKeyChecking=no'
     }
-
-     options {
-            timestamps()
-     }
 
     stages {
          stage('Checkout') {
