@@ -41,18 +41,6 @@ def runTestStage(String testReportName, String gherkinTags) {
     echo "Stage ${testReportName} completed in ${formatBuildDuration(durationMillis)}"
 }
 
-def buildRegressionParallelStages() {
-    def parallelStages = [:]
-    getRegressionTestConfig().each { moduleName, testConfig ->
-        parallelStages[moduleName] = {
-            node('master') {
-                runTestStage(moduleName, testConfig.tags)
-            }
-        }
-    }
-    return parallelStages
-}
-
 pipeline {
     agent any
     environment {
