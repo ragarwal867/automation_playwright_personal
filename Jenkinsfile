@@ -36,6 +36,7 @@ pipeline {
     agent any
     environment {
         GIT_SSH_COMMAND = 'ssh -o StrictHostKeyChecking=no'
+        API_BASE_URL = 'http://localhost:8090/api/v1'
     }
 
     stages {
@@ -55,6 +56,30 @@ pipeline {
                 ])
             }
         }
+        stage('Start Test Run') {
+                    steps {
+                        script {
+                            echo "Starting Test Run"
+                            def payload = """
+                            {
+                                "runType": "Galileo",
+                                "server": "QA",
+                                "branch": "main",
+                                "buildNumber": "23",
+                                "datetimeStart": "${java.time.Instant.now()}",
+                                "status": "IN_PROGRESS"
+                            }
+                            """
+
+                            // Make the API call
+                            sh """
+                                curl -X POST "$API_BASE_URL/testrun/start" \
+                                -H "Content-Type: application/json" \
+                                -d '${payload}'
+                            """
+                        }
+                    }
+        }
         stage('Regression') {
             steps {
                 script {
@@ -70,6 +95,26 @@ pipeline {
 
     post {
         always {
+            script {
+                echo "Updating Test Run end time..."
+
+                def endPayload = """
+                {
+                    "runType": "Galileo",
+                    "server": "QA",
+                    "branch": "main",
+                    "buildNumber": "23",
+                    "datetimeEnd": "${java.time.Instant.now()}",
+                    "status": "COMPLETED"
+                }
+                """
+
+                 sh """
+                    curl -X PUT "$API_BASE_URL/testrun/end" \
+                    -H "Content-Type: application/json" \
+                    -d '${endPayload}' || true
+                """
+            }
             echo "Build complete."
         }
     }
