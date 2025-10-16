@@ -23,15 +23,13 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 @Builder
 public class ScenarioResult {
     private Integer id;
-    private String scenarioName;
     private String testId;
-    private String uri;
-    private int lineNumber;
     private Set<ScenarioTag> tags;
     private String status;
     private String failedStep;
     private String screenshotFilepath;
     private TestRun testRun;
+    private ScenarioDetails scenario;
     private List<TestStep> steps;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private Instant startTime;
@@ -41,7 +39,6 @@ public class ScenarioResult {
 
     public static ScenarioResultBuilder fromTestScenario(TestScenario testScenario) {
         ScenarioResultBuilder builder = new ScenarioResultBuilder();
-        builder.scenarioName(testScenario.getName());
         builder.status(testScenario.getStatus() == null ? "" : testScenario.getStatus().toString());
         builder.failedStep(testScenario.getFailedStep());
         builder.startTime(testScenario.getStart().toInstant(ZoneOffset.UTC));
@@ -61,13 +58,7 @@ public class ScenarioResult {
 
     public static class ScenarioResultBuilder {
         public ScenarioResultBuilder usingScenario(Scenario scenario) {
-            String relativePath = Paths.get(System.getProperty("user.dir"))
-                    .relativize(Paths.get(scenario.getUri()))
-                    .toString();
-
             this.testId(scenario.getId())
-                    .uri(relativePath)
-                    .lineNumber(scenario.getLine())
                     .tags(
                             scenario.getSourceTagNames().stream()
                                     .map(tagName -> {

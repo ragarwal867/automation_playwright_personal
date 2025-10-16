@@ -11,6 +11,7 @@ import net.automation.core.config.Config;
 import net.automation.reports.html.TestReport;
 import net.automation.reports.html.TestScenario;
 
+import java.nio.file.Paths;
 import java.time.ZoneOffset;
 
 @Slf4j
@@ -57,7 +58,19 @@ public class ResultApiClient {
                 .setBranch(System.getProperty(RUN_BRANCH, "develop"))
                 .setBuildNumber(Integer.valueOf(System.getProperty(BUILD_NUMBER, "1")));
 
+
+        String relativePath = Paths.get(System.getProperty("user.dir"))
+                .relativize(Paths.get(scenario.getUri()))
+                .toString();
+
+        ScenarioDetails scenarioDetails = new ScenarioDetails();
+        scenarioDetails
+                .setUri(relativePath)
+                .setLineNumber(scenario.getLine())
+                .setName(scenario.getName());
+
         payloadScenarioResult.setTestRun(payloadTest);
+        payloadScenarioResult.setScenario(scenarioDetails);
 
         return TypeHelper.convertToJson(payloadScenarioResult);
     }

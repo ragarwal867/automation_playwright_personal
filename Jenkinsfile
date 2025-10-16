@@ -25,11 +25,11 @@ def runTestStage(String testReportName, String gherkinTags) {
         -Duser.timezone=UTC \
         -Doracle.jdbc.timezoneAsRegion=false \
         -Dbrowser.headless=true \
+        -Dbrowser.client=${currentBuild.number}
         -Dcucumber.filter.tags='${gherkinTags}' \
         -Dsysteminfo.AppName=${testReportName}
     """
     echo "Stage ${testReportName} completed"
-    echo ""
 }
 
 pipeline {
@@ -57,28 +57,37 @@ pipeline {
             }
         }
         stage('Start Test Run') {
-                    steps {
-                        script {
-                            echo "Starting Test Run"
-                            def payload = """
-                            {
-                                "runType": "Galileo",
-                                "server": "QA",
-                                "branch": "main",
-                                "buildNumber": "23",
-                                "datetimeStart": "${java.time.Instant.now()}",
-                                "status": "IN_PROGRESS"
-                            }
-                            """
+            steps {
+                script {
+                    echo "Starting Test Run"
 
-                            // Make the API call
-                            sh """
-                                curl -X POST "$API_BASE_URL/testrun/start" \
-                                -H "Content-Type: application/json" \
-                                -d '${payload}'
-                            """
+                    def payload = """
+                        {
+                            "runType": "Galileo",
+                            "server": "QA",
+                            "branch": "main",
+                            "buildNumber": "${currentBuild.number}",
+                            "datetimeStart": "${java.time.Instant.now()}",
+                            "status": "IN_PROGRESS"
                         }
+                    """
+
+                    def response = httpRequest(
+                        url: "${API_BASE_URL}/testrun/start",
+                        httpMode: 'POST',
+                        contentType: 'APPLICATION_JSON',
+                        requestBody: payload,
+                        validResponseCodes: '200:299',
+                        consoleLogResponseBody: true
+                    )
+
+                    if (response.status < 200 || response.status >= 300) {
+                        error("Failed to register test run. Response code: ${response.status}")
                     }
+
+                    echo "Test run started successfully (status ${response.status})"
+                }
+            }
         }
         stage('Regression') {
             steps {
@@ -99,21 +108,30 @@ pipeline {
                 echo "Updating Test Run end time..."
 
                 def endPayload = """
-                {
-                    "runType": "Galileo",
-                    "server": "QA",
-                    "branch": "main",
-                    "buildNumber": "23",
-                    "datetimeEnd": "${java.time.Instant.now()}",
-                    "status": "COMPLETED"
-                }
+                    {
+                        "runType": "Galileo",
+                        "server": "QA",
+                        "branch": "main",
+                        "buildNumber": "${currentBuild.number}",
+                        "datetimeEnd": "${java.time.Instant.now()}",
+                        "status": "COMPLETED"
+                    }
                 """
 
-                 sh """
-                    curl -X PUT "$API_BASE_URL/testrun/end" \
-                    -H "Content-Type: application/json" \
-                    -d '${endPayload}' || true
-                """
+               try {
+                    def endResponse = httpRequest(
+                        url: "${API_BASE_URL}/testrun/end",
+                        httpMode: 'PUT',
+                        contentType: 'APPLICATION_JSON',
+                        requestBody: endPayload,
+                        validResponseCodes: '200:299',
+                        consoleLogResponseBody: true
+                    )
+                    echo "Test run marked completed (status ${endResponse.status})"
+               } catch (err) {
+                    echo "Failed to update test run end status: ${err.getMessage()}"
+                    currentBuild.result = 'UNSTABLE'
+               }
             }
             echo "Build complete."
         }
