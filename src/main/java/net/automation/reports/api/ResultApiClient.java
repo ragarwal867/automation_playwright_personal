@@ -55,7 +55,7 @@ public class ResultApiClient {
                 .setDatetimeStart(report.getStart().toInstant(ZoneOffset.UTC))
                 .setServer(System.getProperty(BUILD_ENVIRONMENT, "QA"))
                 .setRunType(System.getProperty(RUN_TYPE, "Galileo"))
-                .setBranch(System.getProperty(RUN_BRANCH, "develop"))
+                .setBranch(System.getProperty(RUN_BRANCH, "main"))
                 .setBuildNumber(Integer.valueOf(System.getProperty(BUILD_NUMBER, "1")));
 
 
