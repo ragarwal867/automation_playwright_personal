@@ -21,7 +21,6 @@ public class ResultApiClient {
     public static final String URL = "http://localhost:8090/";
     public static final String RUN_TYPE = "runType";
     public static final String BUILD_NUMBER = "buildNumber";
-    public static final String PARENT_BUILD_NUMBER = "parentBuildNumber";
     public static final String BUILD_ENVIRONMENT = "env";
     public static final String RUN_BRANCH = "branch";
     public static final String SCENARIO_RECORD_ENDPOINT = "api/v1/scenario/record";

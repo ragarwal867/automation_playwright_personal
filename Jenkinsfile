@@ -102,6 +102,7 @@ def runTestStage(String testReportName, String gherkinTags) {
         -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
         -Dbrowser.headless=true \
         -Denv=${params.ENVIRONMENT} \
+        -Dbranch=${env.BRANCH_NAME} \
         -DbuildNumber=${currentBuild.number} \
         -Dcucumber.filter.tags='${gherkinTags}' \
         -Dsysteminfo.AppName=${testReportName}
@@ -116,9 +117,11 @@ def rerunTestStage() {
         mvn --fail-never test -B \
         -Duser.timezone=UTC \
         -Doracle.jdbc.timezoneAsRegion=false \
+        -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
         -Dbrowser.headless=true \
         -DbuildNumber=${currentBuild.number} \
         -Denv=${params.ENVIRONMENT} \
+        -Dbranch=${env.BRANCH_NAME} \
         -Dcucumber.features=@${WORKSPACE}/${params.RERUN_FILE}
     """
 
