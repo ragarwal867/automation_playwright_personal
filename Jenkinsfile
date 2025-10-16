@@ -27,7 +27,7 @@ properties([
         ),
         [$class: 'ChoiceParameter',
             choiceType: 'PT_RADIO',
-            description: 'Select test plan to run: Regression, SmokeTest, or Custom (to run tests based on the provided gherkin tags).',
+            description: 'Select test plan to run: Regression or Rerun',
             filterLength: 1,
             filterable: false,
             name: 'TEST_CONFIGURATION',
@@ -35,7 +35,7 @@ properties([
             script: [
                 $class: 'GroovyScript',
                 fallbackScript: [classpath: [], sandbox: true, script: 'return []'],
-                script: [classpath: [], sandbox: true, script: 'return ["Regression", "SmokeTest", "Custom", "Rerun"]']
+                script: [classpath: [], sandbox: true, script: 'return ["Regression", "Rerun"]']
             ]
         ],
         string(name: 'PARENT_BUILD_NUMBER', defaultValue: '', description: 'Parent build number for rerun'),
@@ -62,10 +62,34 @@ def getRegressionTestConfig() {
     ]
 }
 
-def shouldRunRegression() { params.TEST_CONFIGURATION == 'Regression' }
-def shouldRunSmoke() { params.TEST_CONFIGURATION == 'SmokeTest' }
-def shouldRerun() { params.TEST_CONFIGURATION == 'Rerun' }
-def shouldPublish() { params.PUBLISH_RESULTS_TO_DASHBOARD }
+def shouldRun() { !env.SKIP_BUILD.toBoolean() }
+def shouldRunRegression() { shouldRun() && params.TEST_CONFIGURATION == 'Regression' }
+def shouldRunSmoke() { shouldRun() && params.TEST_CONFIGURATION == 'SmokeTest' }
+def shouldRerun() { shouldRun() && params.TEST_CONFIGURATION == 'Rerun' }
+def shouldPublish() { shouldRun() && params.PUBLISH_RESULTS_TO_DASHBOARD }
+
+def isBranchIndexingTrigger() {
+    def causes = currentBuild.getBuildCauses()
+    return causes.any { cause ->
+        cause._class == 'jenkins.branch.BranchIndexingCause'
+    }
+}
+
+def validateBuildConfiguration() {
+    if (isBranchIndexingTrigger()) {
+        env.SKIP_BUILD = 'true'
+        currentBuild.result = 'NOT_BUILT'
+        error('Exiting: Triggered by Branch Indexing')
+    }
+
+    if (!isValidTestConfiguration()) {
+        env.SKIP_BUILD = 'true'
+        currentBuild.result = 'NOT_BUILT'
+        error("Build skipped: No valid test configuration selected.")
+    }
+}
+
+def buildRef() { "${currentBuild.number}-${params.ENVIRONMENT}" }
 
 def runTestStage(String testReportName, String gherkinTags) {
     echo "Running test stage: ${testReportName}"
@@ -75,7 +99,9 @@ def runTestStage(String testReportName, String gherkinTags) {
         mvn --fail-never test -B \
         -Duser.timezone=UTC \
         -Doracle.jdbc.timezoneAsRegion=false \
+        -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
         -Dbrowser.headless=true \
+        -Denv=${params.ENVIRONMENT} \
         -DbuildNumber=${currentBuild.number} \
         -Dcucumber.filter.tags='${gherkinTags}' \
         -Dsysteminfo.AppName=${testReportName}
@@ -99,11 +125,21 @@ def rerunTestStage() {
      echo "Rerun Stage completed"
 }
 
+def initializeBuildStage() {
+    echo "Initializing build : ${buildRef()}"
+    currentBuild.displayName = buildRef()
+}
+
 pipeline {
     agent any
     environment {
         GIT_SSH_COMMAND = 'ssh -o StrictHostKeyChecking=no'
         API_BASE_URL = 'http://localhost:8090/api/v1'
+        SKIP_BUILD = 'false'
+    }
+
+    options {
+        buildDiscarder(logRotator(daysToKeepStr: '14', numToKeepStr: '20'))
     }
 
     stages {
@@ -121,6 +157,14 @@ pipeline {
                         [$class: 'CloneOption', depth: 0, noTags: false, shallow: false]
                     ]
                 ])
+            }
+        }
+        stage('Init') {
+            when { expression { shouldRun() } }
+            steps {
+                script {
+                    initializeBuildStage()
+                }
             }
         }
         stage('Start Test Run') {
@@ -163,7 +207,6 @@ pipeline {
                 }
             }
         }
-
         stage('Regression') {
             when { expression { shouldRunRegression() } }
             steps {
