@@ -26,7 +26,6 @@ def runTestStage(String testReportName, String gherkinTags) {
         -Doracle.jdbc.timezoneAsRegion=false \
         -Dbrowser.headless=true \
         -DbuildNumber=${currentBuild.number} \
-        -Dbranch=${currentBuild.branch} \
         -Dcucumber.filter.tags='${gherkinTags}' \
         -Dsysteminfo.AppName=${testReportName}
     """
