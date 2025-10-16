@@ -25,7 +25,6 @@ public class ResultApiClient {
     public static final String BUILD_ENVIRONMENT = "env";
     public static final String RUN_BRANCH = "branch";
     public static final String SCENARIO_RECORD_ENDPOINT = "api/v1/scenario/record";
-    public static final String TEST_RUN_START_ENDPOINT = "api/v1/testrun/start";
 
     private final Config config;
 
@@ -37,12 +36,6 @@ public class ResultApiClient {
     public void sendScenarioResult(TestReport report, TestScenario testScenario, Scenario scenario) {
         String message = createScenarioMessage(report, testScenario, scenario);
         send(message, SCENARIO_RECORD_ENDPOINT);
-
-    }
-
-    public void sendTestRunDetails(TestReport report) {
-        String message = createRunMessage(report);
-        send(message, TEST_RUN_START_ENDPOINT);
 
     }
 
@@ -73,30 +66,6 @@ public class ResultApiClient {
         payloadScenarioResult.setScenario(scenarioDetails);
 
         return TypeHelper.convertToJson(payloadScenarioResult);
-    }
-
-
-    private static String createRunMessage(TestReport report) {
-        TestRun parentRun = null;
-        if (System.getProperty(PARENT_BUILD_NUMBER) != null) {
-            parentRun = new TestRun()
-                    .setDatetimeStart(report.getStart().toInstant(ZoneOffset.UTC))
-                    .setServer(System.getProperty(BUILD_ENVIRONMENT, "QA"))
-                    .setRunType(System.getProperty(RUN_TYPE, "Galileo"))
-                    .setBranch(System.getProperty(RUN_BRANCH, "main"))
-                    .setBuildNumber(Integer.valueOf(System.getProperty(PARENT_BUILD_NUMBER, "1")));
-        }
-
-
-        TestRun payload = new TestRun()
-                .setDatetimeStart(report.getStart().toInstant(ZoneOffset.UTC))
-                .setServer(System.getProperty(BUILD_ENVIRONMENT, "QA"))
-                .setRunType(System.getProperty(RUN_TYPE, "Galileo"))
-                .setBranch(System.getProperty(RUN_BRANCH, "main"))
-                .setBuildNumber(Integer.valueOf(System.getProperty(BUILD_NUMBER, "1")))
-                .setParentRun(parentRun);
-
-        return TypeHelper.convertToJson(payload);
     }
 
     private String getUrl(String endpoint) {

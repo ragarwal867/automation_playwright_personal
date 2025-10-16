@@ -26,42 +26,10 @@ public class Hooks {
         this.context = context;
     }
 
-//    @BeforeAll
-//    public static void beforeAllScenarios() {
-//        try {
-//            report = new TestReport().setStart(LocalDateTime.now(ZoneOffset.UTC));
-//            TestReportHtmlGenerator.generateHtmlReport(report);
-//            // Safe call: wrap in try-catch
-//            try {
-//                ResultApiClient.getInstance().sendTestRunDetails(report);
-//            } catch (Exception e) {
-//                logError("Failed to send test run details: " + e.getMessage());
-//            }
-//        } catch (Exception e) {
-//            logError("Cannot initialize TestReport: " + e.getMessage());
-//        }
-//    }
-
     private static void initReport() {
         if (report == null) {
             report = new TestReport().setStart(LocalDateTime.now(ZoneOffset.UTC));
             TestReportHtmlGenerator.generateHtmlReport(report);
-//            boolean success = false;
-//            int retries = 3;
-//            while (!success && retries > 0) {
-//                try {
-//                    ResultApiClient.getInstance().sendTestRunDetails(report);
-//                    success = true;
-//                } catch (Exception e) {
-//                    retries--;
-//                    Logger.logError("Failed to create TestRun entry. Retries left: " + retries + ". Error: " + e.getMessage());
-//                    try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
-//                }
-//            }
-//
-//            if (!success) {
-//                throw new RuntimeException("Cannot initialize TestRun after retries. Aborting tests.");
-//            }
         }
     }
 
