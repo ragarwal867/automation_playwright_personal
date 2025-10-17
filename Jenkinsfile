@@ -147,9 +147,9 @@ def rerunTestStage() {
                 -Dcucumber.features=@${rerunFilePath}
             """
 
-        } else {
+    } else {
             echo "No RERUN_FILE parameter provided. Skipping rerun stage."
-        }
+    }
 
      echo "Rerun Stage completed"
 }
