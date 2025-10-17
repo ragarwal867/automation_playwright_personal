@@ -122,7 +122,7 @@ def rerunTestStage() {
         -DbuildNumber=${currentBuild.number} \
         -Denv=${params.ENVIRONMENT} \
         -Dbranch=${env.BRANCH_NAME} \
-        -Dcucumber.features=@${{env.WORKSPACE}/${env.RERUN_FILE}
+        -Dcucumber.features=@${env.WORKSPACE}/${env.RERUN_FILE}
     """
 
      echo "Rerun Stage completed"
