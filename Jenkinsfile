@@ -114,31 +114,22 @@ def rerunTestStage() {
     echo "=== Running Rerun Stage ==="
     echo "Workspace = ${env.WORKSPACE}"
 
-    // Determine rerun file name from env or File Parameter
-    def rerunFileName = env.RERUN_FILE ?: (env.RERUN_FILE instanceof hudson.FilePath ? env.RERUN_FILE.getOriginalFilename() : null)
-
-    if (rerunFileName) {
-        echo "Detected RERUN_FILE: ${rerunFileName}"
-
+    if (env.RERUN_FILE?.trim()) {
+        def uploadedFile = "${env.WORKSPACE}/${env.RERUN_FILE}"
         def rerunDir = "${env.WORKSPACE}/rerun"
+        def rerunFilePath = "${rerunDir}/${env.RERUN_FILE}"
+
         sh "mkdir -p ${rerunDir}"
 
-        // If File Parameter object exists, copy it to rerun folder
-        if (params.RERUN_FILE instanceof hudson.FilePath) {
-            echo "Copying uploaded file to rerun directory..."
-            env.RERUN_FILE.copyTo(new File("${rerunDir}/${rerunFileName}"))
-        }
-
-        def rerunFilePath = "${rerunDir}/${rerunFileName}"
-
-        // Verify file exists
         def fileExists = sh(
-            script: "test -f ${rerunFilePath} && echo 'true' || echo 'false'",
+            script: "test -f ${uploadedFile} && echo 'true' || echo 'false'",
             returnStdout: true
         ).trim()
 
         if (fileExists == 'true') {
-            echo "Rerun file is ready at: ${rerunFilePath}"
+            echo "Uploaded rerun file found at workspace root. Moving to: ${rerunFilePath}"
+            sh "mv ${uploadedFile} ${rerunFilePath}"
+            sh "ls -l ${rerunFilePath}"
 
             echo "Triggering Maven rerun in background..."
             sh """
@@ -154,16 +145,18 @@ def rerunTestStage() {
                 > ${rerunDir}/mvn_rerun.log 2>&1 &
             """
             echo "Maven rerun triggered. Check ${rerunDir}/mvn_rerun.log for output."
+
         } else {
-            echo "WARNING: Rerun file does not exist at expected path: ${rerunFilePath}. Skipping rerun stage."
+            echo "WARNING: Rerun file does not exist at expected path: ${uploadedFile}. Skipping rerun stage."
         }
 
     } else {
-        echo "No RERUN_FILE detected. Skipping rerun stage."
+        echo "No RERUN_FILE parameter provided. Skipping rerun stage."
     }
 
     echo "=== Rerun Stage Completed ==="
 }
+
 
 
 def initializeBuildStage() {
