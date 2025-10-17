@@ -115,24 +115,29 @@ def rerunTestStage() {
     echo "RERUN_FILE param = '${RERUN_FILE}'"
     echo "Workspace = ${env.WORKSPACE}"
 
-    // Only proceed if RERUN_FILE parameter is provided
     if (RERUN_FILE) {
-
-        // If RERUN_FILE is a File Parameter, get the absolute path
         def uploadedFilePath
+
+        // Handle File Parameter
         if (RERUN_FILE instanceof File) {
-            uploadedFilePath = RERUN_FILE.getAbsolutePath()
-            echo "Detected RERUN_FILE as File Parameter: ${uploadedFilePath}"
+            echo "Detected RERUN_FILE as File Parameter"
+            echo "Raw RERUN_FILE path: ${RERUN_FILE}"
+
+            uploadedFilePath = "${env.WORKSPACE}/${RERUN_FILE.name}"
+            echo "Copying file to workspace: ${uploadedFilePath}"
+
+            // Copy file from Jenkins temp location to workspace
+            sh "cp '${RERUN_FILE}' '${uploadedFilePath}'"
         } else {
-            // fallback for string parameters
+            // Handle String Parameter
             uploadedFilePath = "${env.WORKSPACE}/${RERUN_FILE}"
             echo "Detected RERUN_FILE as String Parameter: ${uploadedFilePath}"
         }
 
-        // Debug: list workspace
+        // Debug: list workspace contents
         sh "ls -l ${env.WORKSPACE}"
 
-        // Check if the file exists
+        // Check if file exists in workspace
         def fileExists = sh(
             script: "test -f '${uploadedFilePath}' && echo 'true' || echo 'false'",
             returnStdout: true
@@ -141,7 +146,7 @@ def rerunTestStage() {
         if (fileExists == 'true') {
             echo "Uploaded rerun file found at: ${uploadedFilePath}"
 
-            // Run Maven tests using the rerun file
+            // Run Maven tests using rerun file
             sh """
                 mvn --fail-never test -B \
                 -Duser.timezone=UTC \
