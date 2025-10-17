@@ -112,27 +112,28 @@ def runTestStage(String testReportName, String gherkinTags) {
 
 def rerunTestStage() {
     echo "=== Running Rerun Stage ==="
-    echo "RERUN_FILE param = '${env.RERUN_FILE}'"
+    echo "RERUN_FILE param = '${RERUN_FILE}'"
     echo "Workspace = ${env.WORKSPACE}"
 
     if (RERUN_FILE?.trim()) {
-        def uploadedFile = "${env.WORKSPACE}/${env.RERUN_FILE}"
-        def rerunFilePath = "${env.WORKSPACE}/rerun/${env.RERUN_FILE}"
+        def rerunDir = "${env.WORKSPACE}/rerun"
+        sh "mkdir -p ${rerunDir}"
 
-        sh "mkdir -p ${env.WORKSPACE}/rerun"
+        def uploadedFilePath = "${rerunDir}/${RERUN_FILE}"
+
+        writeFile file: uploadedFilePath, text: readFile(file: RERUN_FILE)
 
         def fileExists = sh(
-            script: "test -f ${uploadedFile} && echo 'true' || echo 'false'",
+            script: "test -f ${uploadedFilePath} && echo 'true' || echo 'false'",
             returnStdout: true
         ).trim()
 
         if (fileExists == 'true') {
-            echo "Uploaded rerun file found. Moving to: ${rerunFilePath}"
-            sh "mv ${uploadedFile} ${rerunFilePath}"
-            sh "ls -l ${rerunFilePath}"
+            echo "Uploaded rerun file successfully copied to workspace: ${uploadedFilePath}"
+            sh "ls -l ${uploadedFilePath}"
 
             echo "Triggering Maven rerun in background..."
-            // Run Maven in background so current job does not wait
+            // Run Maven in background so the current job does not wait
             sh """
                 nohup mvn --fail-never test -B \
                 -Duser.timezone=UTC \
@@ -142,13 +143,13 @@ def rerunTestStage() {
                 -DbuildNumber=${currentBuild.number} \
                 -Denv=${params.ENVIRONMENT} \
                 -Dbranch=${env.BRANCH_NAME} \
-                -Dcucumber.features=@${rerunFilePath} \
-                > ${env.WORKSPACE}/rerun/mvn_rerun.log 2>&1 &
+                -Dcucumber.features=@${uploadedFilePath} \
+                > ${rerunDir}/mvn_rerun.log 2>&1 &
             """
-            echo "Maven rerun triggered. Check ${env.WORKSPACE}/rerun/mvn_rerun.log for output."
+            echo "Maven rerun triggered. Check ${rerunDir}/mvn_rerun.log for output."
 
         } else {
-            echo "WARNING: Uploaded rerun file does not exist at path: ${uploadedFile}. Skipping rerun stage."
+            echo "ERROR: Failed to copy uploaded rerun file to workspace: ${uploadedFilePath}"
         }
 
     } else {
