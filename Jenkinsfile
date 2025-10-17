@@ -39,7 +39,7 @@ properties([
             ]
         ],
         string(name: 'PARENT_BUILD_NUMBER', defaultValue: '', description: 'Parent build number for rerun'),
-        file(location: 'RERUN_FILE', description: 'Upload rerun file')
+        file(name: 'RERUN_FILE', description: 'Upload rerun file')
     ])
 ])
 
@@ -111,62 +111,34 @@ def runTestStage(String testReportName, String gherkinTags) {
 }
 
 def rerunTestStage() {
+
     echo "=== Running Rerun Stage ==="
     echo "RERUN_FILE param = '${RERUN_FILE}'"
     echo "Workspace = ${env.WORKSPACE}"
 
-    if (RERUN_FILE) {
-        def uploadedFilePath
+                    // Path where Jenkins stores uploaded file
+    def sourceFilePath = "${currentBuild.rawBuild.getRootDir()}/fileParameters/${RERUN_FILE}"
+    def uploadedFilePath = "${env.WORKSPACE}/${params.RERUN_FILE}"
 
-        // Handle File Parameter
-        if (RERUN_FILE instanceof File) {
-            echo "Detected RERUN_FILE as File Parameter"
-            echo "Raw RERUN_FILE path: ${RERUN_FILE}"
+    echo "Copying uploaded file from: ${sourceFilePath} to workspace: ${uploadedFilePath}"
+    sh "cp '${sourceFilePath}' '${uploadedFilePath}' || echo 'File not found in fileParameters directory'"
 
-            uploadedFilePath = "${env.WORKSPACE}/${RERUN_FILE.name}"
-            echo "Copying file to workspace: ${uploadedFilePath}"
+    sh "ls -l ${env.WORKSPACE}"
 
-            // Copy file from Jenkins temp location to workspace
-            sh "cp '${RERUN_FILE}' '${uploadedFilePath}'"
-        } else {
-            // Handle String Parameter
-            uploadedFilePath = "${env.WORKSPACE}/${RERUN_FILE}"
-            echo "Detected RERUN_FILE as String Parameter: ${uploadedFilePath}"
-        }
-
-        // Debug: list workspace contents
-        sh "ls -l ${env.WORKSPACE}"
-
-        // Check if file exists in workspace
-        def fileExists = sh(
-            script: "test -f '${uploadedFilePath}' && echo 'true' || echo 'false'",
-            returnStdout: true
-        ).trim()
-
-        if (fileExists == 'true') {
-            echo "Uploaded rerun file found at: ${uploadedFilePath}"
-
-            // Run Maven tests using rerun file
-            sh """
-                mvn --fail-never test -B \
-                -Duser.timezone=UTC \
-                -Doracle.jdbc.timezoneAsRegion=false \
-                -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
-                -Dbrowser.headless=true \
-                -DbuildNumber=${currentBuild.number} \
-                -Denv=${params.ENVIRONMENT} \
-                -Dbranch=${env.BRANCH_NAME} \
-                -Dcucumber.features=@${uploadedFilePath}
-            """
-        } else {
-            error "Rerun file does not exist at path: ${uploadedFilePath}. Cannot continue rerun stage."
-        }
-
+    def fileExists = sh(script: "test -f '${uploadedFilePath}' && echo true || echo false", returnStdout: true).trim()
+    if (fileExists == 'true') {
+        echo "Found rerun file. Running tests..."
+        sh """
+            mvn --fail-never test -B \
+            -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
+            -Dbrowser.headless=true \
+            -Denv=${params.ENVIRONMENT} \
+            -Dbranch=${env.BRANCH_NAME} \
+            -Dcucumber.features=@${uploadedFilePath}
+        """
     } else {
-        echo "No RERUN_FILE parameter provided. Skipping rerun stage."
+        error "Rerun file does not exist at path: ${uploadedFilePath}. Cannot continue rerun stage."
     }
-
-    echo "=== Rerun Stage Completed ==="
 }
 
 def initializeBuildStage() {
