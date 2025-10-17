@@ -111,11 +111,11 @@ def runTestStage(String testReportName, String gherkinTags) {
 }
 
 def rerunTestStage() {
-   echo "=== Running Rerun Stage ==="
+       echo "=== Running Rerun Stage ==="
        echo "RERUN_FILE param = '${RERUN_FILE}'"
        echo "Workspace = ${env.WORKSPACE}"
 
-       if (rerunFile?.trim()) {
+       if (RERUN_FILE?.trim()) {
            def uploadedFile = "${env.WORKSPACE}/RERUN_FILE"
            def rerunFilePath = "${env.WORKSPACE}/${RERUN_FILE}"
 
