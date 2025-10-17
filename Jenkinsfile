@@ -114,15 +114,15 @@ def rerunTestStage() {
     echo "=== Running Rerun Stage ==="
     echo "Workspace = ${env.WORKSPACE}"
 
-    // Use `file` parameter binding instead of params.RERUN_FILE
+    // file() just returns filename string in workspace
     def rerunFile = file(name: 'RERUN_FILE', optional: true)
 
     if (rerunFile) {
-        def destinationFile = "${env.WORKSPACE}/rerun/${rerunFile.originalFilename}"
-        echo "Uploaded file detected: ${rerunFile.absolutePath}, moving to ${destinationFile}"
+        def destinationFile = "${env.WORKSPACE}/rerun/${rerunFile}"
+        echo "Uploaded file detected: ${rerunFile}, moving to ${destinationFile}"
 
         sh "mkdir -p ${env.WORKSPACE}/rerun"
-        sh "cp '${rerunFile.absolutePath}' '${destinationFile}'"
+        sh "mv '${env.WORKSPACE}/${rerunFile}' '${destinationFile}'"
         sh "ls -l '${destinationFile}'"
 
         echo "Triggering Maven rerun in background..."
@@ -139,13 +139,13 @@ def rerunTestStage() {
             > ${env.WORKSPACE}/rerun/mvn_rerun.log 2>&1 &
         """
         echo "Maven rerun triggered. Check ${env.WORKSPACE}/rerun/mvn_rerun.log for output."
-
     } else {
         echo "No RERUN_FILE uploaded. Skipping rerun stage."
     }
 
     echo "=== Rerun Stage Completed ==="
 }
+
 
 def initializeBuildStage() {
     echo "Initializing build : ${buildRef()}"
