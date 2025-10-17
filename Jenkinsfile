@@ -117,24 +117,10 @@ def rerunTestStage() {
     echo "Workspace = ${env.WORKSPACE}"
 
     if (RERUN_FILE?.trim()) {
+            def rerunFilePath = "${env.WORKSPACE}/${RERUN_FILE}"
 
-            // Check if the file exists in workspace; if not, fail gracefully
-            def rerunFilePath = "${env.WORKSPACE}/rerun.txt"
-
-            // Attempt to copy from workspace if file exists, else warn
-            if (fileExists(RERUN_FILE)) {
-                echo "Copying '${RERUN_FILE}' to workspace as rerun.txt"
-                writeFile file: rerunFilePath, text: readFile(RERUN_FILE)
-            } else {
-                echo "WARNING: File '${RERUN_FILE}' not found in workspace!"
-                echo "Skipping rerun stage."
-                return
-            }
-
-            // List the file to verify
             sh "ls -l ${rerunFilePath}"
 
-            // Run Maven with rerun file
             sh """
                 mvn --fail-never test -B \
                 -Duser.timezone=UTC \
@@ -237,7 +223,7 @@ pipeline {
             steps {
                 script {
                     echo "=== Running Rerun ===="
-                    echo "Uploaded file: ${params.RERUN_FILE}"
+                    echo "Uploaded file: ${RERUN_FILE}"
                     rerunTestStage()
                 }
             }
