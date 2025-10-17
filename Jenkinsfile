@@ -114,16 +114,16 @@ def rerunTestStage() {
     echo "=== Running Rerun Stage ==="
     echo "Workspace = ${env.WORKSPACE}"
 
-    if (params.RERUN_FILE) {
-        // Jenkins stores uploaded files in a temp path
-        def uploadedFilePath = params.RERUN_FILE.getAbsolutePath()   // Use .getAbsolutePath() to get real file path
-        def destinationFile = "${env.WORKSPACE}/rerun/${params.RERUN_FILE.getOriginalFilename()}"
+    // Use `file` parameter binding instead of params.RERUN_FILE
+    def rerunFile = file(name: 'RERUN_FILE', optional: true)
 
-        echo "Uploaded file detected at: ${uploadedFilePath}, moving to: ${destinationFile}"
+    if (rerunFile) {
+        def destinationFile = "${env.WORKSPACE}/rerun/${rerunFile.originalFilename}"
+        echo "Uploaded file detected: ${rerunFile.absolutePath}, moving to ${destinationFile}"
 
         sh "mkdir -p ${env.WORKSPACE}/rerun"
-        sh "cp '${uploadedFilePath}' '${destinationFile}'"
-        sh "ls -l ${destinationFile}"
+        sh "cp '${rerunFile.absolutePath}' '${destinationFile}'"
+        sh "ls -l '${destinationFile}'"
 
         echo "Triggering Maven rerun in background..."
         sh """
@@ -141,12 +141,11 @@ def rerunTestStage() {
         echo "Maven rerun triggered. Check ${env.WORKSPACE}/rerun/mvn_rerun.log for output."
 
     } else {
-        echo "No RERUN_FILE parameter provided. Skipping rerun stage."
+        echo "No RERUN_FILE uploaded. Skipping rerun stage."
     }
 
     echo "=== Rerun Stage Completed ==="
 }
-
 
 def initializeBuildStage() {
     echo "Initializing build : ${buildRef()}"
