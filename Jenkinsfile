@@ -111,45 +111,45 @@ def runTestStage(String testReportName, String gherkinTags) {
 }
 
 def rerunTestStage() {
-       echo "=== Running Rerun Stage ==="
-       echo "RERUN_FILE param = '${RERUN_FILE}'"
-       echo "Workspace = ${env.WORKSPACE}"
+    echo "=== Running Rerun Stage ==="
+    echo "RERUN_FILE param = '${RERUN_FILE}'"
+    echo "Workspace = ${env.WORKSPACE}"
 
-       if (RERUN_FILE?.trim()) {
-           def uploadedFile = "${env.WORKSPACE}/RERUN_FILE"
-           def rerunFilePath = "${env.WORKSPACE}/${RERUN_FILE}"
+    if (RERUN_FILE?.trim()) {
 
-           // Check if uploaded file exists
-           def fileExists = sh(
-               script: "test -f ${uploadedFile} && echo 'true' || echo 'false'",
-               returnStdout: true
-           ).trim()
+        // Full path to the uploaded rerun file
+        def uploadedFile = "${env.WORKSPACE}/${RERUN_FILE}"
 
-           if (fileExists == 'true') {
-               echo "Uploaded rerun file found. Renaming to: ${rerunFilePath}"
-               sh "mv ${uploadedFile} ${rerunFilePath}"
-               sh "ls -l ${rerunFilePath}"
+        // Check if the file exists
+        def fileExists = sh(
+            script: "test -f '${uploadedFile}' && echo 'true' || echo 'false'",
+            returnStdout: true
+        ).trim()
 
-               sh """
-                   mvn --fail-never test -B \
-                   -Duser.timezone=UTC \
-                   -Doracle.jdbc.timezoneAsRegion=false \
-                   -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
-                   -Dbrowser.headless=true \
-                   -DbuildNumber=${currentBuild.number} \
-                   -Denv=${params.ENVIRONMENT} \
-                   -Dbranch=${env.BRANCH_NAME} \
-                   -Dcucumber.features=@${rerunFilePath}
-               """
-           } else {
-               echo "WARNING: Uploaded rerun file does not exist at path: ${uploadedFile}. Skipping rerun stage."
-           }
+        if (fileExists == 'true') {
+            echo "Uploaded rerun file found at: ${uploadedFile}"
 
-       } else {
-           echo "No RERUN_FILE parameter provided. Skipping rerun stage."
-       }
+            // Run Maven tests using the rerun file
+            sh """
+                mvn --fail-never test -B \
+                -Duser.timezone=UTC \
+                -Doracle.jdbc.timezoneAsRegion=false \
+                -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
+                -Dbrowser.headless=true \
+                -DbuildNumber=${currentBuild.number} \
+                -Denv=${params.ENVIRONMENT} \
+                -Dbranch=${env.BRANCH_NAME} \
+                -Dcucumber.features=@${uploadedFile}
+            """
+        } else {
+            echo "WARNING: Uploaded rerun file does not exist at path: ${uploadedFile}. Skipping rerun stage."
+        }
 
-       echo "=== Rerun Stage Completed ==="
+    } else {
+        echo "No RERUN_FILE parameter provided. Skipping rerun stage."
+    }
+
+    echo "=== Rerun Stage Completed ==="
 }
 
 def initializeBuildStage() {
