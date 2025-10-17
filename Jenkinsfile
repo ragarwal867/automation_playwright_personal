@@ -39,7 +39,7 @@ properties([
             ]
         ],
         string(name: 'PARENT_BUILD_NUMBER', defaultValue: '', description: 'Parent build number for rerun'),
-        base64File(name: 'RERUN_FILE', description: 'Upload rerun file (Base64 encoded)')
+        file(name: 'RERUN_FILE', description: 'Upload rerun file')
     ])
 ])
 
