@@ -212,7 +212,7 @@ pipeline {
                 script {
                     echo "=== Running Rerun ===="
                     echo "Uploaded file: ${params.RERUN_FILE}"
-                    rerunTestStage(moduleName, testConfig.tags)
+                    rerunTestStage()
                 }
             }
         }
