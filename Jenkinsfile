@@ -114,36 +114,34 @@ def rerunTestStage() {
     echo "=== Running Rerun Stage ==="
     echo "Workspace = ${env.WORKSPACE}"
 
-    // Jenkins stages uploaded file as 'RERUN_FILE' in workspace root
-    def stagedFile = "${env.WORKSPACE}/RERUN_FILE"
-    def targetDir = "${env.WORKSPACE}/rerun"
-    def targetFile = "${targetDir}/rerunfile.txt"
+    if (params.RERUN_FILE) {
+        // Jenkins stores uploaded files in a temp path
+        def uploadedFilePath = params.RERUN_FILE.getAbsolutePath()   // Use .getAbsolutePath() to get real file path
+        def destinationFile = "${env.WORKSPACE}/rerun/${params.RERUN_FILE.getOriginalFilename()}"
 
-    sh "mkdir -p ${targetDir}"
+        echo "Uploaded file detected at: ${uploadedFilePath}, moving to: ${destinationFile}"
 
-    def fileExists = sh(script: "test -f ${stagedFile} && echo 'true' || echo 'false'", returnStdout: true).trim()
-
-    if (fileExists == 'true') {
-        echo "Uploaded file detected: ${stagedFile}, moving to ${targetFile}"
-        sh "mv ${stagedFile} ${targetFile}"
-        sh "ls -l ${targetFile}"
+        sh "mkdir -p ${env.WORKSPACE}/rerun"
+        sh "cp '${uploadedFilePath}' '${destinationFile}'"
+        sh "ls -l ${destinationFile}"
 
         echo "Triggering Maven rerun in background..."
         sh """
-            nohup mvn clean install -B \
-                -Duser.timezone=UTC \
-                -Doracle.jdbc.timezoneAsRegion=false \
-                -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
-                -Dbrowser.headless=true \
-                -DbuildNumber=${currentBuild.number} \
-                -Denv=${params.ENVIRONMENT} \
-                -Dbranch=${env.BRANCH_NAME} \
-                -Dcucumber.features=@${targetFile} \
-                > ${targetDir}/mvn_rerun.log 2>&1 &
+            nohup mvn --fail-never test -B \
+            -Duser.timezone=UTC \
+            -Doracle.jdbc.timezoneAsRegion=false \
+            -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
+            -Dbrowser.headless=true \
+            -DbuildNumber=${currentBuild.number} \
+            -Denv=${params.ENVIRONMENT} \
+            -Dbranch=${env.BRANCH_NAME} \
+            -Dcucumber.features=@${destinationFile} \
+            > ${env.WORKSPACE}/rerun/mvn_rerun.log 2>&1 &
         """
-        echo "Maven rerun triggered. Check ${targetDir}/mvn_rerun.log for output."
+        echo "Maven rerun triggered. Check ${env.WORKSPACE}/rerun/mvn_rerun.log for output."
+
     } else {
-        echo "No uploaded rerun file found at expected path: ${stagedFile}. Skipping rerun stage."
+        echo "No RERUN_FILE parameter provided. Skipping rerun stage."
     }
 
     echo "=== Rerun Stage Completed ==="
