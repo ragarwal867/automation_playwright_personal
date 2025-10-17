@@ -115,19 +115,31 @@ def rerunTestStage() {
     echo "RERUN_FILE param = '${RERUN_FILE}'"
     echo "Workspace = ${env.WORKSPACE}"
 
-    if (RERUN_FILE?.trim()) {
+    // Only proceed if RERUN_FILE parameter is provided
+    if (RERUN_FILE) {
 
-        // Full path to the uploaded rerun file
-        def uploadedFile = "${env.WORKSPACE}/${RERUN_FILE}"
+        // If RERUN_FILE is a File Parameter, get the absolute path
+        def uploadedFilePath
+        if (RERUN_FILE instanceof File) {
+            uploadedFilePath = RERUN_FILE.getAbsolutePath()
+            echo "Detected RERUN_FILE as File Parameter: ${uploadedFilePath}"
+        } else {
+            // fallback for string parameters
+            uploadedFilePath = "${env.WORKSPACE}/${RERUN_FILE}"
+            echo "Detected RERUN_FILE as String Parameter: ${uploadedFilePath}"
+        }
+
+        // Debug: list workspace
+        sh "ls -l ${env.WORKSPACE}"
 
         // Check if the file exists
         def fileExists = sh(
-            script: "test -f '${uploadedFile}' && echo 'true' || echo 'false'",
+            script: "test -f '${uploadedFilePath}' && echo 'true' || echo 'false'",
             returnStdout: true
         ).trim()
 
         if (fileExists == 'true') {
-            echo "Uploaded rerun file found at: ${uploadedFile}"
+            echo "Uploaded rerun file found at: ${uploadedFilePath}"
 
             // Run Maven tests using the rerun file
             sh """
@@ -139,10 +151,10 @@ def rerunTestStage() {
                 -DbuildNumber=${currentBuild.number} \
                 -Denv=${params.ENVIRONMENT} \
                 -Dbranch=${env.BRANCH_NAME} \
-                -Dcucumber.features=@${uploadedFile}
+                -Dcucumber.features=@${uploadedFilePath}
             """
         } else {
-            echo "WARNING: Uploaded rerun file does not exist at path: ${uploadedFile}. Skipping rerun stage."
+            error "Rerun file does not exist at path: ${uploadedFilePath}. Cannot continue rerun stage."
         }
 
     } else {
