@@ -113,21 +113,43 @@ def runTestStage(String testReportName, String gherkinTags) {
 def rerunTestStage() {
     echo "Running rerun stage"
 
-    if (params.RERUN_FILE) {
-                    writeFile file: "${env.WORKSPACE}/rerun.txt", text: "${params.RERUN_FILE}"
-    }
+    echo "RERUN_FILE param = '${params.RERUN_FILE}'"
+    echo "Workspace = ${env.WORKSPACE}"
 
-    sh """
-        mvn --fail-never test -B \
-        -Duser.timezone=UTC \
-        -Doracle.jdbc.timezoneAsRegion=false \
-        -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
-        -Dbrowser.headless=true \
-        -DbuildNumber=${currentBuild.number} \
-        -Denv=${params.ENVIRONMENT} \
-        -Dbranch=${env.BRANCH_NAME} \
-        -Dcucumber.features=@${env.WORKSPACE}/rerun.txt
-    """
+    if (params.RERUN_FILE?.trim()) {
+
+            // Check if the file exists in workspace; if not, fail gracefully
+            def rerunFilePath = "${env.WORKSPACE}/rerun.txt"
+
+            // Attempt to copy from workspace if file exists, else warn
+            if (fileExists(params.RERUN_FILE)) {
+                echo "Copying '${params.RERUN_FILE}' to workspace as rerun.txt"
+                writeFile file: rerunFilePath, text: readFile(params.RERUN_FILE)
+            } else {
+                echo "WARNING: File '${params.RERUN_FILE}' not found in workspace!"
+                echo "Skipping rerun stage."
+                return
+            }
+
+            // List the file to verify
+            sh "ls -l ${rerunFilePath}"
+
+            // Run Maven with rerun file
+            sh """
+                mvn --fail-never test -B \
+                -Duser.timezone=UTC \
+                -Doracle.jdbc.timezoneAsRegion=false \
+                -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
+                -Dbrowser.headless=true \
+                -DbuildNumber=${currentBuild.number} \
+                -Denv=${params.ENVIRONMENT} \
+                -Dbranch=${env.BRANCH_NAME} \
+                -Dcucumber.features=@${rerunFilePath}
+            """
+
+        } else {
+            echo "No RERUN_FILE parameter provided. Skipping rerun stage."
+        }
 
      echo "Rerun Stage completed"
 }
