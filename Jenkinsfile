@@ -112,13 +112,12 @@ def runTestStage(String testReportName, String gherkinTags) {
 
 def rerunTestStage() {
    echo "=== Running Rerun Stage ==="
-       def rerunFile = params.RERUN_FILE
-       echo "RERUN_FILE param = '${rerunFile}'"
+       echo "RERUN_FILE param = '${RERUN_FILE}'"
        echo "Workspace = ${env.WORKSPACE}"
 
        if (rerunFile?.trim()) {
            def uploadedFile = "${env.WORKSPACE}/RERUN_FILE"
-           def rerunFilePath = "${env.WORKSPACE}/${rerunFile}"
+           def rerunFilePath = "${env.WORKSPACE}/${RERUN_FILE}"
 
            // Check if uploaded file exists
            def fileExists = sh(
