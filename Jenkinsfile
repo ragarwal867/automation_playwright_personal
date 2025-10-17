@@ -114,17 +114,24 @@ def rerunTestStage() {
     echo "=== Running Rerun Stage ==="
     echo "Workspace = ${env.WORKSPACE}"
 
-    // Define expected filename, exactly as user uploads
-    def rerunFileName = "rerunfile.txt"
-    def sourceFile = "${env.WORKSPACE}/${rerunFileName}"
-    def destinationFile = "${env.WORKSPACE}/rerun/${rerunFileName}"
+    if (params.RERUN_FILE) {
+        echo "RERUN_FILE param detected: ${params.RERUN_FILE}"
+        echo "Class type: ${params.RERUN_FILE.getClass()}"
 
-    if (fileExists(sourceFile)) {
-        echo "Uploaded file detected: ${sourceFile}, moving to ${destinationFile}"
+        def rerunDir = "${env.WORKSPACE}/rerun"
+        sh "mkdir -p ${rerunDir}"
 
-        sh "mkdir -p ${env.WORKSPACE}/rerun"
-        sh "mv '${sourceFile}' '${destinationFile}'"
-        sh "ls -l '${destinationFile}'"
+        def destinationFile = "${rerunDir}/rerunfile.txt"
+
+        if (params.RERUN_FILE instanceof hudson.FilePath) {
+            echo "Copying uploaded file to workspace..."
+            params.RERUN_FILE.copyTo(new File(destinationFile))
+        } else {
+            echo "Moving file to rerun directory..."
+            sh "mv ${env.WORKSPACE}/${params.RERUN_FILE} ${destinationFile}"
+        }
+
+        sh "ls -l ${rerunDir}"
 
         echo "Triggering Maven rerun in background..."
         sh """
@@ -137,11 +144,12 @@ def rerunTestStage() {
             -Denv=${params.ENVIRONMENT} \
             -Dbranch=${env.BRANCH_NAME} \
             -Dcucumber.features=@${destinationFile} \
-            > ${env.WORKSPACE}/rerun/mvn_rerun.log 2>&1 &
+            > ${rerunDir}/mvn_rerun.log 2>&1 &
         """
-        echo "Maven rerun triggered. Check ${env.WORKSPACE}/rerun/mvn_rerun.log for output."
+        echo "Maven rerun triggered. Check ${rerunDir}/mvn_rerun.log for output."
+
     } else {
-        echo "No uploaded rerun file found at expected path: ${sourceFile}. Skipping rerun stage."
+        echo "No RERUN_FILE parameter provided or file not uploaded. Skipping rerun stage."
     }
 
     echo "=== Rerun Stage Completed ==="
