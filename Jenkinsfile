@@ -112,28 +112,35 @@ def runTestStage(String testReportName, String gherkinTags) {
 
 def rerunTestStage() {
     echo "=== Running Rerun Stage ==="
-    echo "RERUN_FILE param = '${RERUN_FILE}'"
     echo "Workspace = ${env.WORKSPACE}"
 
-    if (RERUN_FILE?.trim()) {
+    // Determine rerun file name from env or File Parameter
+    def rerunFileName = env.RERUN_FILE ?: (env.RERUN_FILE instanceof hudson.FilePath ? env.RERUN_FILE.getOriginalFilename() : null)
+
+    if (rerunFileName) {
+        echo "Detected RERUN_FILE: ${rerunFileName}"
+
         def rerunDir = "${env.WORKSPACE}/rerun"
         sh "mkdir -p ${rerunDir}"
 
-        def uploadedFilePath = "${rerunDir}/${RERUN_FILE}"
+        // If File Parameter object exists, copy it to rerun folder
+        if (params.RERUN_FILE instanceof hudson.FilePath) {
+            echo "Copying uploaded file to rerun directory..."
+            env.RERUN_FILE.copyTo(new File("${rerunDir}/${rerunFileName}"))
+        }
 
-        writeFile file: uploadedFilePath, text: readFile(file: RERUN_FILE)
+        def rerunFilePath = "${rerunDir}/${rerunFileName}"
 
+        // Verify file exists
         def fileExists = sh(
-            script: "test -f ${uploadedFilePath} && echo 'true' || echo 'false'",
+            script: "test -f ${rerunFilePath} && echo 'true' || echo 'false'",
             returnStdout: true
         ).trim()
 
         if (fileExists == 'true') {
-            echo "Uploaded rerun file successfully copied to workspace: ${uploadedFilePath}"
-            sh "ls -l ${uploadedFilePath}"
+            echo "Rerun file is ready at: ${rerunFilePath}"
 
             echo "Triggering Maven rerun in background..."
-            // Run Maven in background so the current job does not wait
             sh """
                 nohup mvn --fail-never test -B \
                 -Duser.timezone=UTC \
@@ -143,21 +150,21 @@ def rerunTestStage() {
                 -DbuildNumber=${currentBuild.number} \
                 -Denv=${params.ENVIRONMENT} \
                 -Dbranch=${env.BRANCH_NAME} \
-                -Dcucumber.features=@${uploadedFilePath} \
+                -Dcucumber.features=@${rerunFilePath} \
                 > ${rerunDir}/mvn_rerun.log 2>&1 &
             """
             echo "Maven rerun triggered. Check ${rerunDir}/mvn_rerun.log for output."
-
         } else {
-            echo "ERROR: Failed to copy uploaded rerun file to workspace: ${uploadedFilePath}"
+            echo "WARNING: Rerun file does not exist at expected path: ${rerunFilePath}. Skipping rerun stage."
         }
 
     } else {
-        echo "No RERUN_FILE parameter provided. Skipping rerun stage."
+        echo "No RERUN_FILE detected. Skipping rerun stage."
     }
 
     echo "=== Rerun Stage Completed ==="
 }
+
 
 def initializeBuildStage() {
     echo "Initializing build : ${buildRef()}"
@@ -188,7 +195,7 @@ pipeline {
         stage('Start Test Run') {
             steps {
                 script {
-                    echo "Starting Test Run (Rerun: ${params.IS_RERUN})"
+                    echo "Starting Test Run"
 
                     def payload = [
                         runType: "Galileo",
