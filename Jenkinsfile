@@ -114,15 +114,16 @@ def rerunTestStage() {
     echo "=== Running Rerun Stage ==="
     echo "Workspace = ${env.WORKSPACE}"
 
-    // file() just returns filename string in workspace
-    def rerunFile = file(name: 'RERUN_FILE', optional: true)
+    // Define expected filename, exactly as user uploads
+    def rerunFileName = "rerunfile.txt"
+    def sourceFile = "${env.WORKSPACE}/${rerunFileName}"
+    def destinationFile = "${env.WORKSPACE}/rerun/${rerunFileName}"
 
-    if (rerunFile) {
-        def destinationFile = "${env.WORKSPACE}/rerun/${rerunFile}"
-        echo "Uploaded file detected: ${rerunFile}, moving to ${destinationFile}"
+    if (fileExists(sourceFile)) {
+        echo "Uploaded file detected: ${sourceFile}, moving to ${destinationFile}"
 
         sh "mkdir -p ${env.WORKSPACE}/rerun"
-        sh "mv '${env.WORKSPACE}/${rerunFile}' '${destinationFile}'"
+        sh "mv '${sourceFile}' '${destinationFile}'"
         sh "ls -l '${destinationFile}'"
 
         echo "Triggering Maven rerun in background..."
@@ -140,11 +141,17 @@ def rerunTestStage() {
         """
         echo "Maven rerun triggered. Check ${env.WORKSPACE}/rerun/mvn_rerun.log for output."
     } else {
-        echo "No RERUN_FILE uploaded. Skipping rerun stage."
+        echo "No uploaded rerun file found at expected path: ${sourceFile}. Skipping rerun stage."
     }
 
     echo "=== Rerun Stage Completed ==="
 }
+
+// Helper function
+def fileExists(path) {
+    return sh(script: "test -f '${path}' && echo true || echo false", returnStdout: true).trim() == 'true'
+}
+
 
 
 def initializeBuildStage() {
