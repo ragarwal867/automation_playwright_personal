@@ -39,7 +39,7 @@ properties([
             ]
         ],
         string(name: 'PARENT_BUILD_NUMBER', defaultValue: '', description: 'Parent build number for rerun'),
-        file(name: 'RERUN_FILE', description: 'Upload rerun file')
+        base64File(name: 'RERUN_FILE', description: 'Upload rerun file (Base64 encoded)')
     ])
 ])
 
@@ -117,38 +117,37 @@ def rerunTestStage() {
     def rerunDir = "${env.WORKSPACE}/rerun"
     sh "mkdir -p ${rerunDir}"
 
-    def sourceFile = "${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_NUMBER}/fileParameters/rerunfile.txt"
     def destinationFile = "${rerunDir}/rerunfile.txt"
 
-    sh """
-        if [ -f "${sourceFile}" ]; then
-            echo "Found uploaded file in fileParameters. Copying to workspace..."
-            cp "${sourceFile}" "${destinationFile}"
-        else
-            echo "No uploaded file found. Skipping rerun stage."
-        fi
-    """
+    if (params.RERUN_FILE) {
+        echo "Decoding Base64 content from RERUN_FILE parameter..."
+        // Decode Base64 and write to file
+        writeFile file: destinationFile, text: new String(params.RERUN_FILE.decodeBase64(), 'UTF-8')
+        echo "Decoded rerun file saved at: ${destinationFile}"
 
-    sh "ls -l ${rerunDir}"
+        sh "ls -l ${rerunDir}"
 
-    def fileExists = sh(script: "test -f '${destinationFile}' && echo true || echo false", returnStdout: true).trim()
-    if (fileExists == 'true') {
-        echo "Triggering Maven rerun in background..."
-        sh """
-            nohup mvn --fail-never test -B \
-            -Duser.timezone=UTC \
-            -Doracle.jdbc.timezoneAsRegion=false \
-            -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
-            -Dbrowser.headless=true \
-            -DbuildNumber=${currentBuild.number} \
-            -Denv=${params.ENVIRONMENT} \
-            -Dbranch=${env.BRANCH_NAME} \
-            -Dcucumber.features=@${destinationFile} \
-            > ${rerunDir}/mvn_rerun.log 2>&1 &
-        """
-        echo "Maven rerun triggered. Check ${rerunDir}/mvn_rerun.log for output."
+        // Check if file exists
+        def fileExists = sh(script: "test -f '${destinationFile}' && echo true || echo false", returnStdout: true).trim()
+        if (fileExists == 'true') {
+            echo "Triggering Maven rerun..."
+            sh """
+                mvn --fail-never test -B \
+                -Duser.timezone=UTC \
+                -Doracle.jdbc.timezoneAsRegion=false \
+                -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
+                -Dbrowser.headless=true \
+                -DbuildNumber=${currentBuild.number} \
+                -Denv=${params.ENVIRONMENT} \
+                -Dbranch=${env.BRANCH_NAME} \
+                -Dcucumber.features=@${destinationFile}
+            """
+            echo "Maven rerun completed."
+        } else {
+            echo "Rerun file not found after decoding. Skipping rerun stage."
+        }
     } else {
-        echo "Rerun file not found. Skipping rerun stage."
+        echo "No RERUN_FILE parameter provided. Skipping rerun stage."
     }
 
     echo "=== Rerun Stage Completed ==="
