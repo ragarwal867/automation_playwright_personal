@@ -115,11 +115,8 @@ def rerunTestStage() {
     echo "Workspace = ${env.WORKSPACE}"
 
     if (RERUN_FILE) {
-        def rerunDir = "${env.WORKSPACE}/rerun"
-        sh "mkdir -p ${rerunDir}"
-
-        def uploadedFile = "${RERUN_FILE}"
-        def destinationFile = "${rerunDir}/${uploadedFile}"
+        def uploadedFile = "${env.WORKSPACE}/RERUN_FILE"
+        def destinationFile = "${env.WORKSPACE}/${RERUN_FILE}"
 
         echo "Uploaded file detected: ${uploadedFile}, moving to ${destinationFile}"
 
@@ -137,8 +134,7 @@ def rerunTestStage() {
             -DbuildNumber=${currentBuild.number} \
             -Denv=${params.ENVIRONMENT} \
             -Dbranch=${env.BRANCH_NAME} \
-            -Dcucumber.features=@${destinationFile} \
-            > ${rerunDir}/mvn_rerun.log 2>&1 &
+            -Dcucumber.features=@${destinationFile}
         """
         echo "Maven rerun triggered. Check ${rerunDir}/mvn_rerun.log for output."
 
