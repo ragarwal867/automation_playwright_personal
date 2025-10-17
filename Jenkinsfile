@@ -113,20 +113,20 @@ def runTestStage(String testReportName, String gherkinTags) {
 def rerunTestStage() {
     echo "Running rerun stage"
 
-    echo "RERUN_FILE param = '${params.RERUN_FILE}'"
+    echo "RERUN_FILE param = '${RERUN_FILE}'"
     echo "Workspace = ${env.WORKSPACE}"
 
-    if (params.RERUN_FILE?.trim()) {
+    if (RERUN_FILE?.trim()) {
 
             // Check if the file exists in workspace; if not, fail gracefully
             def rerunFilePath = "${env.WORKSPACE}/rerun.txt"
 
             // Attempt to copy from workspace if file exists, else warn
-            if (fileExists(params.RERUN_FILE)) {
-                echo "Copying '${params.RERUN_FILE}' to workspace as rerun.txt"
-                writeFile file: rerunFilePath, text: readFile(params.RERUN_FILE)
+            if (fileExists(RERUN_FILE)) {
+                echo "Copying '${RERUN_FILE}' to workspace as rerun.txt"
+                writeFile file: rerunFilePath, text: readFile(RERUN_FILE)
             } else {
-                echo "WARNING: File '${params.RERUN_FILE}' not found in workspace!"
+                echo "WARNING: File '${RERUN_FILE}' not found in workspace!"
                 echo "Skipping rerun stage."
                 return
             }
