@@ -113,6 +113,10 @@ def runTestStage(String testReportName, String gherkinTags) {
 def rerunTestStage() {
     echo "Running rerun stage"
 
+    if (params.RERUN_FILE) {
+                    writeFile file: "${env.WORKSPACE}/rerun.txt", text: "${params.RERUN_FILE}"
+    }
+
     sh """
         mvn --fail-never test -B \
         -Duser.timezone=UTC \
@@ -122,7 +126,7 @@ def rerunTestStage() {
         -DbuildNumber=${currentBuild.number} \
         -Denv=${params.ENVIRONMENT} \
         -Dbranch=${env.BRANCH_NAME} \
-        -Dcucumber.features=@${env.WORKSPACE}/${env.RERUN_FILE}
+        -Dcucumber.features=@${env.WORKSPACE}/rerun.txt
     """
 
      echo "Rerun Stage completed"
