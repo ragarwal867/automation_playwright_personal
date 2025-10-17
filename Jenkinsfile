@@ -111,33 +111,46 @@ def runTestStage(String testReportName, String gherkinTags) {
 }
 
 def rerunTestStage() {
-    echo "Running rerun stage"
+   echo "=== Running Rerun Stage ==="
+       def rerunFile = params.RERUN_FILE
+       echo "RERUN_FILE param = '${rerunFile}'"
+       echo "Workspace = ${env.WORKSPACE}"
 
-    echo "RERUN_FILE param = '${RERUN_FILE}'"
-    echo "Workspace = ${env.WORKSPACE}"
+       if (rerunFile?.trim()) {
+           def uploadedFile = "${env.WORKSPACE}/RERUN_FILE"
+           def rerunFilePath = "${env.WORKSPACE}/${rerunFile}"
 
-    if (RERUN_FILE?.trim()) {
-            def rerunFilePath = "${env.WORKSPACE}/${RERUN_FILE}"
+           // Check if uploaded file exists
+           def fileExists = sh(
+               script: "test -f ${uploadedFile} && echo 'true' || echo 'false'",
+               returnStdout: true
+           ).trim()
 
-            sh "ls -l ${rerunFilePath}"
+           if (fileExists == 'true') {
+               echo "Uploaded rerun file found. Renaming to: ${rerunFilePath}"
+               sh "mv ${uploadedFile} ${rerunFilePath}"
+               sh "ls -l ${rerunFilePath}"
 
-            sh """
-                mvn --fail-never test -B \
-                -Duser.timezone=UTC \
-                -Doracle.jdbc.timezoneAsRegion=false \
-                -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
-                -Dbrowser.headless=true \
-                -DbuildNumber=${currentBuild.number} \
-                -Denv=${params.ENVIRONMENT} \
-                -Dbranch=${env.BRANCH_NAME} \
-                -Dcucumber.features=@${rerunFilePath}
-            """
+               sh """
+                   mvn --fail-never test -B \
+                   -Duser.timezone=UTC \
+                   -Doracle.jdbc.timezoneAsRegion=false \
+                   -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
+                   -Dbrowser.headless=true \
+                   -DbuildNumber=${currentBuild.number} \
+                   -Denv=${params.ENVIRONMENT} \
+                   -Dbranch=${env.BRANCH_NAME} \
+                   -Dcucumber.features=@${rerunFilePath}
+               """
+           } else {
+               echo "WARNING: Uploaded rerun file does not exist at path: ${uploadedFile}. Skipping rerun stage."
+           }
 
-    } else {
-            echo "No RERUN_FILE parameter provided. Skipping rerun stage."
-    }
+       } else {
+           echo "No RERUN_FILE parameter provided. Skipping rerun stage."
+       }
 
-     echo "Rerun Stage completed"
+       echo "=== Rerun Stage Completed ==="
 }
 
 def initializeBuildStage() {
