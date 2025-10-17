@@ -114,25 +114,25 @@ def rerunTestStage() {
     echo "=== Running Rerun Stage ==="
     echo "Workspace = ${env.WORKSPACE}"
 
-    if (params.RERUN_FILE) {
-        echo "RERUN_FILE param detected: ${params.RERUN_FILE}"
-        echo "Class type: ${params.RERUN_FILE.getClass()}"
+    def rerunDir = "${env.WORKSPACE}/rerun"
+    sh "mkdir -p ${rerunDir}"
 
-        def rerunDir = "${env.WORKSPACE}/rerun"
-        sh "mkdir -p ${rerunDir}"
+    def sourceFile = "${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_NUMBER}/fileParameters/rerunfile.txt"
+    def destinationFile = "${rerunDir}/rerunfile.txt"
 
-        def destinationFile = "${rerunDir}/rerunfile.txt"
+    sh """
+        if [ -f "${sourceFile}" ]; then
+            echo "Found uploaded file in fileParameters. Copying to workspace..."
+            cp "${sourceFile}" "${destinationFile}"
+        else
+            echo "No uploaded file found. Skipping rerun stage."
+        fi
+    """
 
-        if (params.RERUN_FILE instanceof hudson.FilePath) {
-            echo "Copying uploaded file to workspace..."
-            params.RERUN_FILE.copyTo(new File(destinationFile))
-        } else {
-            echo "Moving file to rerun directory..."
-            sh "mv ${env.WORKSPACE}/${params.RERUN_FILE} ${destinationFile}"
-        }
+    sh "ls -l ${rerunDir}"
 
-        sh "ls -l ${rerunDir}"
-
+    def fileExists = sh(script: "test -f '${destinationFile}' && echo true || echo false", returnStdout: true).trim()
+    if (fileExists == 'true') {
         echo "Triggering Maven rerun in background..."
         sh """
             nohup mvn --fail-never test -B \
@@ -147,20 +147,12 @@ def rerunTestStage() {
             > ${rerunDir}/mvn_rerun.log 2>&1 &
         """
         echo "Maven rerun triggered. Check ${rerunDir}/mvn_rerun.log for output."
-
     } else {
-        echo "No RERUN_FILE parameter provided or file not uploaded. Skipping rerun stage."
+        echo "Rerun file not found. Skipping rerun stage."
     }
 
     echo "=== Rerun Stage Completed ==="
 }
-
-// Helper function
-def fileExists(path) {
-    return sh(script: "test -f '${path}' && echo true || echo false", returnStdout: true).trim() == 'true'
-}
-
-
 
 def initializeBuildStage() {
     echo "Initializing build : ${buildRef()}"
