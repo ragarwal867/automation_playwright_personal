@@ -17,26 +17,6 @@ Feature: Google Search 3
     Given I am on the Google search page
     Then I close the browser
 
-  Scenario: Navigate to Google 35
-    Given I am on the Google search page
-    Then I close the browser
-
-  Scenario: Navigate to Google 36
-    Given I am on the Google search page
-    Then I close the browser
-
-  Scenario: Navigate to Google 37
-    Given I am on the Google search page
-    Then I close the browser
-
-  Scenario: Navigate to Google 38
-    Given I am on the Google search page
-    Then I close the browser
-
-  Scenario: Navigate to Google 39
-    Given I am on the Google search page
-    Then I close the browser
-
   Scenario: Navigate to Google 40
     Given I am on the Google search page
     Then the page title should be "Yahoo"
