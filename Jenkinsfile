@@ -130,7 +130,7 @@ def rerunTestStage() {
              // Number of Playwright runners
              def numRunners = 2
              echo "Splitting rerun file into ${numRunners} parts for ${numRunners} Playwright runners..."
-             sh "split -n l/${numRunners} '${destinationFile}' '${rerunDir}/part_'"
+             sh "split -n l/${numRunners} --numeric-suffixes=0 --suffix-length=2 '${destinationFile}' '${rerunDir}/part_'"
              sh "ls -lh ${rerunDir}"
 
               def runnerIndex = 0
