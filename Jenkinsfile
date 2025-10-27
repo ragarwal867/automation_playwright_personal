@@ -10,11 +10,11 @@ properties([
             description: 'Select the number of threads that should be used when running automated tests.',
             name: 'NUMBER_OF_THREADS'
         ),
-         choice(
+        choice(
             choices: ['0', '1', '2'],
             description: 'Select the number of rerun for failed scenarios.',
             name: 'REQUESTED_RERUN'
-         ),
+        ),
         choice(
             choices: ['playwright'],
             description: 'Select browser client type',
