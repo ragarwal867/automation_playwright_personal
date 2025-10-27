@@ -52,7 +52,6 @@ properties([
 @NonCPS
 def getRegressionTestConfig() {
     return [
-        UBS               : [tags: '@regression and @ubs'],
         EPRES             : [tags: '@regression and @galileo and @epres'],
         ADMININSTRATION   : [tags: '@regression and @galileo and @administration'],
         HELP              : [tags: '@regression and @galileo and @help'],
