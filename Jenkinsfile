@@ -57,13 +57,7 @@ def getRegressionTestConfig() {
         ADMININSTRATION   : [tags: '@regression and @galileo and @administration'],
         HELP              : [tags: '@regression and @galileo and @help'],
         GTEE              : [tags: '@regression and @galileo and @gtee'],
-        LC                : [tags: '@regression and @galileo and @lc'],
-        CONVERSATION      : [tags: '@regression and @galileo and @conversation'],
-        MLA               : [tags: '@regression and @galileo and @mla'],
-        CORRECT_INSTRUMENT: [tags: '@regression and @galileo and @correctInstrument'],
-        ADDRESS_BOOK      : [tags: '@regression and @galileo and @addressbook'],
-        MIGRATION         : [tags: '@regression and @migration'],
-        ONBOARDING        : [tags: '@regression and @onboarding']
+        LC                : [tags: '@regression and @galileo and @lc']
     ]
 }
 

@@ -5,10 +5,6 @@ Feature: Google Search 4
     Given I am on the Google search page
     Then I close the browser
 
-  Scenario: Navigate to Google 42
-    Given I am on the Google search page
-    Then I close the browser
-
   Scenario: Navigate to Google 43
     Given I am on the Google search page
     Then the page title should be "Yahoo"
