@@ -277,6 +277,7 @@ pipeline {
                         validResponseCodes: '200:299',
                         consoleLogResponseBody: true
                     )
+                    cleanWs(deleteDirs: true, notFailBuild: true)
                     echo "Test run marked completed (status ${endResponse.status})"
                } catch (err) {
                     echo "Failed to update test run end status: ${err.getMessage()}"
