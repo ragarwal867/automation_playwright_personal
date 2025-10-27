@@ -39,4 +39,5 @@ Feature: Google Search 3
 
   Scenario: Navigate to Google 40
     Given I am on the Google search page
+    Then the page title should be "Yahoo"
     Then I close the browser

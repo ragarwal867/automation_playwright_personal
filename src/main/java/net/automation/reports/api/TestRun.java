@@ -27,6 +27,7 @@ public class TestRun {
     private String status;
     private TestRun parentRun;
     private TestRun childRun;
+    private Integer requestedRerun;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private Instant datetimeStart;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")

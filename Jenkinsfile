@@ -10,6 +10,11 @@ properties([
             description: 'Select the number of threads that should be used when running automated tests.',
             name: 'NUMBER_OF_THREADS'
         ),
+         choice(
+            choices: ['0', '1', '2'],
+            description: 'Select the number of rerun for failed scenarios.',
+            name: 'REQUESTED_RERUN'
+         ),
         choice(
             choices: ['playwright'],
             description: 'Select browser client type',
@@ -21,7 +26,7 @@ properties([
             name: 'DB_CLEANUP'
         ),
         booleanParam(
-            defaultValue: true,
+            defaultValue: false,
             description: 'Publish and archive test results to the Test Results Dashboard.',
             name: 'PUBLISH_RESULTS_TO_DASHBOARD'
         ),
@@ -39,7 +44,7 @@ properties([
             ]
         ],
         string(name: 'PARENT_BUILD_NUMBER', defaultValue: '', description: 'Parent build number for rerun'),
-        file(name: 'RERUN_FILE', description: 'Upload rerun file')
+        base64File(name: 'RERUN_FILE', description: 'Upload rerun file')
     ])
 ])
 
@@ -121,28 +126,40 @@ def rerunTestStage() {
 
     if (params.RERUN_FILE) {
         echo "Decoding Base64 content from RERUN_FILE parameter..."
-        // Decode Base64 and write to file
         writeFile file: destinationFile, text: new String(params.RERUN_FILE.decodeBase64(), 'UTF-8')
         echo "Decoded rerun file saved at: ${destinationFile}"
 
-        sh "ls -l ${rerunDir}"
+        sh "ls -lh ${rerunDir}"
 
-        // Check if file exists
         def fileExists = sh(script: "test -f '${destinationFile}' && echo true || echo false", returnStdout: true).trim()
+
         if (fileExists == 'true') {
-            echo "Triggering Maven rerun..."
-            sh """
-                mvn --fail-never test -B \
-                -Duser.timezone=UTC \
-                -Doracle.jdbc.timezoneAsRegion=false \
-                -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
-                -Dbrowser.headless=true \
-                -DbuildNumber=${currentBuild.number} \
-                -Denv=${params.ENVIRONMENT} \
-                -Dbranch=${env.BRANCH_NAME} \
-                -Dcucumber.features=@${destinationFile}
-            """
-            echo "Maven rerun completed."
+             // Number of Playwright runners
+             def numRunners = 2
+             echo "Splitting rerun file into ${numRunners} parts for ${numRunners} Playwright runners..."
+             sh "split -n l/${numRunners} '${destinationFile}' '${rerunDir}/part_'"
+             sh "ls -lh ${rerunDir}"
+
+              def runnerIndex = 0
+              def partFile = String.format("%s/part_%02d", rerunDir, runnerIndex)
+
+              def partExists = sh(script: "test -f '${partFile}' && echo true || echo false", returnStdout: true).trim()
+              if (partExists == 'true') {
+                echo "Executing ONLY part ${runnerIndex + 1} for testing: ${partFile}"
+                sh """
+                    mvn --fail-never test -B \
+                    -Duser.timezone=UTC \
+                    -Doracle.jdbc.timezoneAsRegion=false \
+                    -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
+                    -Dbrowser.headless=true \
+                    -DbuildNumber=${currentBuild.number} \
+                    -Denv=${params.ENVIRONMENT} \
+                    -Dbranch=${env.BRANCH_NAME} \
+                    -Dcucumber.features=@${partFile}
+                """
+              } else {
+                echo "No part file found for runner index ${runnerIndex}. Skipping."
+              }
         } else {
             echo "Rerun file not found after decoding. Skipping rerun stage."
         }
@@ -189,6 +206,7 @@ pipeline {
                         server: params.ENVIRONMENT,
                         branch: env.BRANCH_NAME ?: "main",
                         buildNumber: currentBuild.number,
+                        requestedRerun: params.REQUESTED_RERUN,
                         datetimeStart: java.time.Instant.now().toString(),
                         status: "IN_PROGRESS"
                     ]
@@ -272,7 +290,6 @@ pipeline {
                     currentBuild.result = 'UNSTABLE'
                }
             }
-            echo "Build complete."
         }
     }
 }

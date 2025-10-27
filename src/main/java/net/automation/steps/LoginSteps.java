@@ -20,6 +20,14 @@ public class LoginSteps {
         page.navigate("https://www.google.com");
     }
 
+    @Then("the page title should be {string}")
+    public void the_page_title_should_be(String expectedTitle) {
+        String actualTitle = page.title();
+        if (!actualTitle.equals(expectedTitle)) {
+            throw new AssertionError("Expected title: " + expectedTitle + " but found: " + actualTitle);
+        }
+    }
+
     @Then("I close the browser")
     public void i_close_the_browser() {
         if (browser != null) {
