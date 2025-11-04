@@ -214,7 +214,7 @@ pipeline {
                     }
 
                     def response = httpRequest(
-                        url: "${API_BASE_URL}/testrun/start",
+                        url: "${API_BASE_URL}/test-runs/start",
                         httpMode: 'POST',
                         contentType: 'APPLICATION_JSON',
                         requestBody: groovy.json.JsonOutput.toJson(payload),
@@ -270,7 +270,7 @@ pipeline {
 
                try {
                     def endResponse = httpRequest(
-                        url: "${API_BASE_URL}/testrun/end",
+                        url: "${API_BASE_URL}/test-runs/complete",
                         httpMode: 'PUT',
                         contentType: 'APPLICATION_JSON',
                         requestBody: groovy.json.JsonOutput.toJson(endPayload),
