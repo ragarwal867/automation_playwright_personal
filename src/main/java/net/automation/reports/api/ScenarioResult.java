@@ -13,7 +13,6 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.nio.file.Paths;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -22,11 +21,10 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 @Data
 @Builder
 public class ScenarioResult {
-    private Integer id;
     private String testId;
     private Set<ScenarioTag> tags;
     private String status;
-    private String failedStep;
+    private String failedReason;
     private String screenshotFilepath;
     private TestRun testRun;
     private ScenarioDetails scenario;
@@ -40,7 +38,7 @@ public class ScenarioResult {
     public static ScenarioResultBuilder fromTestScenario(TestScenario testScenario) {
         ScenarioResultBuilder builder = new ScenarioResultBuilder();
         builder.status(testScenario.getStatus() == null ? "" : testScenario.getStatus().toString());
-        builder.failedStep(testScenario.getFailedStep());
+        builder.failedReason(testScenario.getFailedStep());
         builder.startTime(testScenario.getStart().toInstant(ZoneOffset.UTC));
         builder.endTime(testScenario.getEnd().toInstant(ZoneOffset.UTC));
         builder.screenshotFilepath(testScenario.getScreenshotFilepath());

@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.automation.clients.api.ApiClient;
 import net.automation.utils.TypeHelper;
-import net.automation.core.config.Config;
 import net.automation.reports.html.TestReport;
 import net.automation.reports.html.TestScenario;
 
@@ -25,10 +24,7 @@ public class ResultApiClient {
     public static final String RUN_BRANCH = "branch";
     public static final String SCENARIO_RECORD_ENDPOINT = "api/v1/scenario/record";
 
-    private final Config config;
-
     private ResultApiClient() {
-        this.config = Config.getInstance();
     }
 
 

@@ -19,7 +19,6 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TestRun {
-    private Integer id;
     private String runType;
     private String server;
     private Integer buildNumber;

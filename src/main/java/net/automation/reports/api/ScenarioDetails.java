@@ -16,7 +16,6 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ScenarioDetails {
-    private Integer id;
     private String name;
     private String uri;
     private Integer lineNumber;
