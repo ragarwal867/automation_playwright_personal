@@ -72,7 +72,7 @@ public class ResultApiClient {
         apiClient.invoke(
                 Method.POST,
                 getUrl(endpoint),
-                204,
+                201,
                 r -> r
                         .setBody(message)
                         .setContentType(ContentType.JSON));
