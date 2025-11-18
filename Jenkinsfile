@@ -101,6 +101,7 @@ def runTestStage(String testReportName, String gherkinTags) {
         -Dbrowser.headless=true \
         -Denv=${params.ENVIRONMENT} \
         -Dbranch=${env.BRANCH_NAME} \
+        -DrunType=Galileo \
         -DbuildNumber=${currentBuild.number} \
         -Dcucumber.filter.tags='${gherkinTags}' \
         -Dsysteminfo.AppName=${testReportName}
