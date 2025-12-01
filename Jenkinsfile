@@ -148,6 +148,7 @@ def rerunTestStage() {
                     -Dbrowser.headless=true \
                     -DbuildNumber=${currentBuild.number} \
                     -Denv=${params.ENVIRONMENT} \
+                    -DrunType=Galileo \
                     -Dbranch=${env.BRANCH_NAME} \
                     -Dcucumber.features=@${partFile}
                 """
@@ -266,7 +267,7 @@ pipeline {
                     branch: env.BRANCH_NAME ?: "main",
                     buildNumber: currentBuild.number,
                     datetimeEnd: java.time.Instant.now().toString(),
-                    status: "COMPLETED"
+                    status: currentBuild.result
                 ]
 
                try {
@@ -282,7 +283,6 @@ pipeline {
                     echo "Test run marked completed (status ${endResponse.status})"
                } catch (err) {
                     echo "Failed to update test run end status: ${err.getMessage()}"
-                    currentBuild.result = 'UNSTABLE'
                }
             }
         }
