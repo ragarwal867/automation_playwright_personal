@@ -10,8 +10,11 @@ import net.automation.utils.TypeHelper;
 import net.automation.reports.html.TestReport;
 import net.automation.reports.html.TestScenario;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.ZoneOffset;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 public class ResultApiClient {
@@ -30,8 +33,15 @@ public class ResultApiClient {
 
     public void sendScenarioResult(TestReport report, TestScenario testScenario, Scenario scenario) {
         String message = createScenarioMessage(report, testScenario, scenario);
-        send(message, SCENARIO_RECORD_ENDPOINT);
-
+        CompletableFuture.runAsync(() -> {
+            try {
+                ReportRetryUtil.retry(() -> send(message, SCENARIO_RECORD_ENDPOINT), 3, 1000);
+                log.info("Scenario result sent successfully.");
+            } catch (Exception e) {
+                log.error("Failed to send scenario result after retries: {}", e.getMessage());
+                saveFailedScenarioPayloadLocally(message);
+            }
+        });
     }
 
     private static String createScenarioMessage(TestReport report, TestScenario testScenario, Scenario scenario) {
@@ -78,14 +88,14 @@ public class ResultApiClient {
                         .setContentType(ContentType.JSON));
     }
 
-
-    public String get(String endpoint) {
-        ApiClient apiClient = new ApiClient(getUrl(endpoint));
-        return apiClient.invoke(
-                Method.GET,
-                getUrl(endpoint),
-                200,
-                r -> r.setContentType(ContentType.JSON)
-        ).toString();
+    private void saveFailedScenarioPayloadLocally(String json) {
+        try {
+            Files.createDirectories(Paths.get("unsent-reports"));
+            String name = "scenario-" + System.currentTimeMillis() + ".json";
+            Files.writeString(Paths.get("unsent-reports", name), json);
+            log.warn("Stored failed scenario report locally for retry: {}", name);
+        } catch (IOException ex) {
+            log.error("Could not store failed scenario payload: {}", ex.getMessage());
+        }
     }
 }
