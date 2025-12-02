@@ -101,7 +101,7 @@ def runTestStage(String testReportName, String gherkinTags) {
         -Doracle.jdbc.timezoneAsRegion=false \
         -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
         -Dbrowser.headless=true \
-        -DresultApi.url=${API_BASE_URL} \
+        -DresultApi.url=${env.API_BASE_URL}
         -Denv=${params.ENVIRONMENT} \
         -Dbranch=${env.BRANCH_NAME} \
         -DrunType=Galileo \
@@ -147,7 +147,7 @@ def rerunTestStage() {
                     mvn --fail-never test -B \
                     -Duser.timezone=UTC \
                     -Doracle.jdbc.timezoneAsRegion=false \
-                    -DresultApi.url=${API_BASE_URL} \
+                    -DresultApi.url=${env.API_BASE_URL}
                     -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
                     -Dbrowser.headless=true \
                     -DbuildNumber=${currentBuild.number} \
@@ -179,6 +179,7 @@ pipeline {
     environment {
         GIT_SSH_COMMAND = 'ssh -o StrictHostKeyChecking=no'
         SKIP_BUILD = 'false'
+        API_BASE_URL = 'http://localhost:8090/api/v1'
     }
 
     options {
