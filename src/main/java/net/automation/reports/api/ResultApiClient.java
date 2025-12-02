@@ -12,8 +12,10 @@ import net.automation.reports.html.TestScenario;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -51,48 +53,49 @@ public class ResultApiClient {
 
     public void sendUnsentReports() {
         if (!resultApiIsConfigured()) {
-            log.warn("Result API not configured — skipping unsent reports.");
+            log.warn("Result API not configured — skipping unsent records.");
             return;
         }
 
         try {
-            var unsentDir = Paths.get("unsent-reports");
-            if (!Files.exists(unsentDir)) {
-                log.info("No unsent reports directory found.");
-                return;
-            }
-
             String buildNumber = sanitize(System.getProperty(BUILD_NUMBER, "0"));
             String env = sanitize(System.getProperty(BUILD_ENVIRONMENT, "unknown"));
             String branch = sanitize(System.getProperty(RUN_BRANCH, "unknown"));
+            String runFolderName = String.format("%s_%s_%s", env, branch, buildNumber);
 
-            String currentRunPrefix = String.format("scenario_%s_%s_%s_",
-                    buildNumber, env, branch);
-
-            var unsentFiles = Files.list(unsentDir)
-                    .filter(p -> p.toString().endsWith(".json"))
-                    .filter(p -> p.getFileName().toString().startsWith(currentRunPrefix))
-                    .toList();
-
-            if (unsentFiles.isEmpty()) {
-                log.info("No unsent reports for current run.");
+            Path runDir = Paths.get("unsent-records", runFolderName);
+            if (!Files.exists(runDir)) {
+                log.info("No unsent records directory found for current run: {}", runFolderName);
                 return;
             }
 
-            log.info("Found {} unsent report(s) for current run. Attempting to send...", unsentFiles.size());
+            List<Path> unsentFiles;
+
+            try (var stream = Files.list(runDir)) {
+                unsentFiles = stream
+                        .filter(p -> p.toString().endsWith(".json"))
+                        .toList();
+            }
+
+            if (unsentFiles.isEmpty()) {
+                log.info("No unsent records for current run.");
+                return;
+            }
+
+            log.info("Found {} unsent record(s) for current run. Attempting to send...", unsentFiles.size());
 
             for (var file : unsentFiles) {
                 try {
                     String message = Files.readString(file);
-                    ReportRetryUtil.retry(() -> send(message, SCENARIO_RECORD_ENDPOINT), 3, 1000);
+                    ReportRetryUtil.retry(() -> send(message, SCENARIO_RECORD_ENDPOINT), 1, 1000);
                     Files.delete(file);
                     log.info("Successfully sent and deleted: {}", file.getFileName());
                 } catch (Exception e) {
-                    log.error("Failed to send unsent report {}: {}", file.getFileName(), e.getMessage());
+                    log.error("Failed to send unsent record {}: {}", file.getFileName(), e.getMessage());
                 }
             }
         } catch (IOException e) {
-            log.error("Error processing unsent reports: {}", e.getMessage());
+            log.error("Error processing unsent records: {}", e.getMessage());
         }
     }
 
@@ -142,21 +145,22 @@ public class ResultApiClient {
 
     private void saveFailedScenarioPayloadLocally(String json) {
         try {
-            Files.createDirectories(Paths.get("unsent-reports"));
-
             String buildNumber = System.getProperty(BUILD_NUMBER, "0");
             String env = System.getProperty(BUILD_ENVIRONMENT, "unknown");
             String branch = System.getProperty(RUN_BRANCH, "unknown");
             long timestamp = System.currentTimeMillis();
 
-            String name = String.format("scenario_%s_%s_%s_%d.json",
-                    sanitize(buildNumber),
+            String runFolderName = String.format("%s_%s_%s",
                     sanitize(env),
                     sanitize(branch),
-                    timestamp);
+                    sanitize(buildNumber));
+            Path runDir = Paths.get("unsent-records", runFolderName);
+            Files.createDirectories(runDir);
 
-            Files.writeString(Paths.get("unsent-reports", name), json);
-            log.warn("Stored failed scenario report locally for retry: {}", name);
+            String fileName = String.format("scenario_%d.json", timestamp);
+            Path filePath = runDir.resolve(fileName);
+            Files.writeString(filePath, json);
+            log.warn("Stored failed scenario report locally for retry: {}/{}", runFolderName, fileName);
         } catch (IOException ex) {
             log.error("Could not store failed scenario payload: {}", ex.getMessage());
         }
