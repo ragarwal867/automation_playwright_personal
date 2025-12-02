@@ -49,6 +49,8 @@ properties([
 ])
 
 
+def API_BASE_URL = 'http://localhost:8090/api/v1'
+
 @NonCPS
 def getRegressionTestConfig() {
     return [
@@ -99,6 +101,7 @@ def runTestStage(String testReportName, String gherkinTags) {
         -Doracle.jdbc.timezoneAsRegion=false \
         -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
         -Dbrowser.headless=true \
+        -DresultApi.url=${API_BASE_URL} \
         -Denv=${params.ENVIRONMENT} \
         -Dbranch=${env.BRANCH_NAME} \
         -DrunType=Galileo \
@@ -144,6 +147,7 @@ def rerunTestStage() {
                     mvn --fail-never test -B \
                     -Duser.timezone=UTC \
                     -Doracle.jdbc.timezoneAsRegion=false \
+                    -DresultApi.url=${API_BASE_URL} \
                     -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
                     -Dbrowser.headless=true \
                     -DbuildNumber=${currentBuild.number} \
@@ -174,7 +178,6 @@ pipeline {
     agent any
     environment {
         GIT_SSH_COMMAND = 'ssh -o StrictHostKeyChecking=no'
-        API_BASE_URL = 'http://localhost:8090/api/v1'
         SKIP_BUILD = 'false'
     }
 

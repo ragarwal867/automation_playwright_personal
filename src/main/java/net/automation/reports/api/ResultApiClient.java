@@ -20,18 +20,23 @@ import java.util.concurrent.CompletableFuture;
 public class ResultApiClient {
     @Getter
     private static final ResultApiClient instance = new ResultApiClient();
-    public static final String URL = "http://localhost:8090/";
+    public static final String URL = "resultApi.url";
     public static final String RUN_TYPE = "runType";
     public static final String BUILD_NUMBER = "buildNumber";
     public static final String BUILD_ENVIRONMENT = "env";
     public static final String RUN_BRANCH = "branch";
-    public static final String SCENARIO_RECORD_ENDPOINT = "api/v1/scenario/record";
+    public static final String SCENARIO_RECORD_ENDPOINT = "/scenario/record";
 
     private ResultApiClient() {
     }
 
 
     public void sendScenarioResult(TestReport report, TestScenario testScenario, Scenario scenario) {
+        if (!resultApiIsConfigured()) {
+            log.warn("Result API not configured — skipping reporting.");
+            return;
+        }
+
         String message = createScenarioMessage(report, testScenario, scenario);
         CompletableFuture.runAsync(() -> {
             try {
@@ -74,7 +79,7 @@ public class ResultApiClient {
     }
 
     private String getUrl(String endpoint) {
-        return URL + endpoint;
+        return System.getProperty(URL) + endpoint;
     }
 
     private void send(String message, String endpoint) {
@@ -97,5 +102,10 @@ public class ResultApiClient {
         } catch (IOException ex) {
             log.error("Could not store failed scenario payload: {}", ex.getMessage());
         }
+    }
+
+    public boolean resultApiIsConfigured() {
+        String url = System.getProperty(URL);
+        return url != null && !url.isEmpty();
     }
 }
