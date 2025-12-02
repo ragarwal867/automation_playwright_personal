@@ -49,6 +49,53 @@ public class ResultApiClient {
         });
     }
 
+    public void sendUnsentReports() {
+        if (!resultApiIsConfigured()) {
+            log.warn("Result API not configured — skipping unsent reports.");
+            return;
+        }
+
+        try {
+            var unsentDir = Paths.get("unsent-reports");
+            if (!Files.exists(unsentDir)) {
+                log.info("No unsent reports directory found.");
+                return;
+            }
+
+            String buildNumber = sanitize(System.getProperty(BUILD_NUMBER, "0"));
+            String env = sanitize(System.getProperty(BUILD_ENVIRONMENT, "unknown"));
+            String branch = sanitize(System.getProperty(RUN_BRANCH, "unknown"));
+
+            String currentRunPrefix = String.format("scenario_%s_%s_%s_",
+                    buildNumber, env, branch);
+
+            var unsentFiles = Files.list(unsentDir)
+                    .filter(p -> p.toString().endsWith(".json"))
+                    .filter(p -> p.getFileName().toString().startsWith(currentRunPrefix))
+                    .toList();
+
+            if (unsentFiles.isEmpty()) {
+                log.info("No unsent reports for current run.");
+                return;
+            }
+
+            log.info("Found {} unsent report(s) for current run. Attempting to send...", unsentFiles.size());
+
+            for (var file : unsentFiles) {
+                try {
+                    String message = Files.readString(file);
+                    ReportRetryUtil.retry(() -> send(message, SCENARIO_RECORD_ENDPOINT), 3, 1000);
+                    Files.delete(file);
+                    log.info("Successfully sent and deleted: {}", file.getFileName());
+                } catch (Exception e) {
+                    log.error("Failed to send unsent report {}: {}", file.getFileName(), e.getMessage());
+                }
+            }
+        } catch (IOException e) {
+            log.error("Error processing unsent reports: {}", e.getMessage());
+        }
+    }
+
     private static String createScenarioMessage(TestReport report, TestScenario testScenario, Scenario scenario) {
         ScenarioResult payloadScenarioResult = ScenarioResult.fromTestScenario(testScenario)
                 .usingScenario(scenario)
@@ -96,12 +143,27 @@ public class ResultApiClient {
     private void saveFailedScenarioPayloadLocally(String json) {
         try {
             Files.createDirectories(Paths.get("unsent-reports"));
-            String name = "scenario-" + System.currentTimeMillis() + ".json";
+
+            String buildNumber = System.getProperty(BUILD_NUMBER, "0");
+            String env = System.getProperty(BUILD_ENVIRONMENT, "unknown");
+            String branch = System.getProperty(RUN_BRANCH, "unknown");
+            long timestamp = System.currentTimeMillis();
+
+            String name = String.format("scenario_%s_%s_%s_%d.json",
+                    sanitize(buildNumber),
+                    sanitize(env),
+                    sanitize(branch),
+                    timestamp);
+
             Files.writeString(Paths.get("unsent-reports", name), json);
             log.warn("Stored failed scenario report locally for retry: {}", name);
         } catch (IOException ex) {
             log.error("Could not store failed scenario payload: {}", ex.getMessage());
         }
+    }
+
+    private String sanitize(String value) {
+        return value.replaceAll("[^a-zA-Z0-9_-]", "_");
     }
 
     public boolean resultApiIsConfigured() {

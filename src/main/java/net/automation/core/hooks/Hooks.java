@@ -38,6 +38,7 @@ public class Hooks {
         try {
             if (report != null) {
                 report.setEnd(LocalDateTime.now(ZoneOffset.UTC));
+                ResultApiClient.getInstance().sendUnsentReports();
                 TestReportHtmlGenerator.generateHtmlReport(report);
             }
         } catch (Exception e) {
