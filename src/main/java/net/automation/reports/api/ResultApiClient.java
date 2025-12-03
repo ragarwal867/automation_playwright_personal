@@ -28,6 +28,7 @@ public class ResultApiClient {
     public static final String BUILD_ENVIRONMENT = "env";
     public static final String RUN_BRANCH = "branch";
     public static final String SCENARIO_RECORD_ENDPOINT = "/scenario/record";
+    public static final Integer SCENARIO_RECORD_RETRY_COUNT = 2;
 
     private ResultApiClient() {
     }
@@ -42,7 +43,7 @@ public class ResultApiClient {
         String message = createScenarioMessage(report, testScenario, scenario);
         CompletableFuture.runAsync(() -> {
             try {
-                ReportRetryUtil.retry(() -> send(message, SCENARIO_RECORD_ENDPOINT), 3, 1000);
+                ReportRetryUtil.retry(() -> send(message, SCENARIO_RECORD_ENDPOINT), SCENARIO_RECORD_RETRY_COUNT, 1000);
                 log.info("Scenario result sent successfully.");
             } catch (Exception e) {
                 log.error("Failed to send scenario result after retries: {}", e.getMessage());
@@ -87,7 +88,7 @@ public class ResultApiClient {
             for (var file : unsentFiles) {
                 try {
                     String message = Files.readString(file);
-                    ReportRetryUtil.retry(() -> send(message, SCENARIO_RECORD_ENDPOINT), 1, 1000);
+                    ReportRetryUtil.retry(() -> send(message, SCENARIO_RECORD_ENDPOINT), SCENARIO_RECORD_RETRY_COUNT, 1000);
                     Files.delete(file);
                     log.info("Successfully sent and deleted: {}", file.getFileName());
                 } catch (Exception e) {
@@ -99,6 +100,17 @@ public class ResultApiClient {
         }
     }
 
+    private void send(String message, String endpoint) {
+        ApiClient apiClient = new ApiClient(getUrl(endpoint));
+        apiClient.invoke(
+                Method.POST,
+                getUrl(endpoint),
+                201,
+                r -> r
+                        .setBody(message)
+                        .setContentType(ContentType.JSON));
+    }
+
     private static String createScenarioMessage(TestReport report, TestScenario testScenario, Scenario scenario) {
         ScenarioResult payloadScenarioResult = ScenarioResult.fromTestScenario(testScenario)
                 .usingScenario(scenario)
@@ -106,10 +118,10 @@ public class ResultApiClient {
 
         TestRun payloadTest = new TestRun()
                 .setDatetimeStart(report.getStart().toInstant(ZoneOffset.UTC))
-                .setServer(System.getProperty(BUILD_ENVIRONMENT, "QA"))
-                .setRunType(System.getProperty(RUN_TYPE, "Galileo"))
-                .setBranch(System.getProperty(RUN_BRANCH, "main"))
-                .setBuildNumber(Integer.valueOf(System.getProperty(BUILD_NUMBER, "1")));
+                .setServer(System.getProperty(BUILD_ENVIRONMENT, "Unknown"))
+                .setRunType(System.getProperty(RUN_TYPE, "Unknown"))
+                .setBranch(System.getProperty(RUN_BRANCH, "Unknown"))
+                .setBuildNumber(Integer.valueOf(System.getProperty(BUILD_NUMBER, "0")));
 
 
         String relativePath = Paths.get(System.getProperty("user.dir"))
@@ -130,17 +142,6 @@ public class ResultApiClient {
 
     private String getUrl(String endpoint) {
         return System.getProperty(URL) + endpoint;
-    }
-
-    private void send(String message, String endpoint) {
-        ApiClient apiClient = new ApiClient(getUrl(endpoint));
-        apiClient.invoke(
-                Method.POST,
-                getUrl(endpoint),
-                201,
-                r -> r
-                        .setBody(message)
-                        .setContentType(ContentType.JSON));
     }
 
     private void saveFailedScenarioPayloadLocally(String json) {
