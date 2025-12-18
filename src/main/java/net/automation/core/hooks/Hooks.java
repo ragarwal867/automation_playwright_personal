@@ -73,7 +73,7 @@ public class Hooks {
                         : null)
                 .setFailedStackTrace(status.equals(TestStatus.FAILED)
                         ? this.getScenarioErrorWithStackTrace(scenario)
-                        : null);;
+                        : null);
 
         TestReportHtmlGenerator.generateHtmlReport(report);
         Logger.clearLogs();
