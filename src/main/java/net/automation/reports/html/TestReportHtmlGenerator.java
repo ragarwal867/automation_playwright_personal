@@ -224,7 +224,7 @@ public class TestReportHtmlGenerator {
         Map<String, List<TestScenario>> filteredScenarios = scenarios.stream()
                 .filter(s -> s.getStatus() == TestStatus.FAILED)
                 .sorted(Comparator.comparing(TestScenario::getStart))
-                .collect(Collectors.groupingBy(TestScenario::getFailedStep));
+                .collect(Collectors.groupingBy(TestScenario::getFailedReason));
 
         writer.write("<h2>Failed Tests</h2>");
         writer.write("<table>");

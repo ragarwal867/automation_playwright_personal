@@ -38,15 +38,14 @@ public class ScenarioResult {
     public static ScenarioResultBuilder fromTestScenario(TestScenario testScenario) {
         ScenarioResultBuilder builder = new ScenarioResultBuilder();
         builder.status(testScenario.getStatus() == null ? "" : testScenario.getStatus().toString());
-        builder.failedReason(testScenario.getFailedStep());
+        builder.failedReason(testScenario.getFailedReason());
         builder.startTime(testScenario.getStart().toInstant(ZoneOffset.UTC));
         builder.endTime(testScenario.getEnd().toInstant(ZoneOffset.UTC));
         builder.screenshotFilepath(testScenario.getScreenshotFilepath());
 
 
         List<TestStep> steps = testScenario.getSteps().stream()
-                .map(step -> new TestStep(step.getName(), step.getStatus() == null ? "" : step.getStatus().toString()
-                        , step.getStart().toInstant(ZoneOffset.UTC), step.getEnd().toInstant(ZoneOffset.UTC)))
+                .map(step -> new TestStep(step.getName(), step.getStatus() == null ? "" : step.getStatus().toString()))
                 .toList();
 
         builder.steps(steps);

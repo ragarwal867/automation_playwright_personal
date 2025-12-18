@@ -15,14 +15,15 @@ public class TestScenario {
     private String name;
     private TestStatus status;
     private String failedLogs;
-    private String failedStep;
+    private String failedReason;
+    private String failedStackTrace;
     private LocalDateTime start;
     private LocalDateTime end;
     private String screenshotFilepath;
     private List<TestStep> steps;
 
     public TestScenario() {
-        failedStep = "";
+        failedReason = "";
         steps = new ArrayList<>();
     }
 

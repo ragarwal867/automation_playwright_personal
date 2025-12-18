@@ -65,12 +65,15 @@ public class Hooks {
                 .setEnd(LocalDateTime.now(ZoneOffset.UTC))
                 .setStatus(scenario.getStatus() == Status.PASSED ? TestStatus.PASSED : TestStatus.FAILED)
                 .setScreenshotFilepath(null)
-                .setFailedStep(status.equals(TestStatus.FAILED)
+                .setFailedReason(status.equals(TestStatus.FAILED)
                         ? getScenarioError(scenario)
                         : null)
                 .setFailedLogs(scenario.isFailed()
                         ? Logger.getLastLogs(100, "<br>")
-                        : null);
+                        : null)
+                .setFailedStackTrace(status.equals(TestStatus.FAILED)
+                        ? this.getScenarioErrorWithStackTrace(scenario)
+                        : null);;
 
         TestReportHtmlGenerator.generateHtmlReport(report);
         Logger.clearLogs();
@@ -120,5 +123,36 @@ public class Hooks {
         }
 
         return scenarioError;
+    }
+
+    private String getScenarioErrorWithStackTrace(Scenario scenario) {
+        StringBuilder scenarioError = new StringBuilder();
+
+        try {
+            var delegateField = scenario.getClass().getDeclaredField("delegate");
+            delegateField.setAccessible(true);
+            Object delegate = delegateField.get(scenario);
+
+            var stepResultsField = delegate.getClass().getDeclaredField("stepResults");
+            stepResultsField.setAccessible(true);
+            List<Result> stepResults = (List<Result>) stepResultsField.get(delegate);
+
+            for (Result result : stepResults) {
+                if (result.getError() != null) {
+                    Throwable error = result.getError();
+
+                    // Get full stack trace
+                    java.io.StringWriter sw = new java.io.StringWriter();
+                    java.io.PrintWriter pw = new java.io. PrintWriter(sw);
+                    error.printStackTrace(pw);
+
+                    scenarioError.append(sw.toString()).append("\n");
+                }
+            }
+        } catch (Exception e) {
+            scenarioError.append("Cannot get the scenario error. Details: ").append(e.getMessage());
+        }
+
+        return scenarioError. toString();
     }
 }
