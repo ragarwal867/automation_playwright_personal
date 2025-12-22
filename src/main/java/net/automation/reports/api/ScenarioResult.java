@@ -25,6 +25,7 @@ public class ScenarioResult {
     private Set<ScenarioTag> tags;
     private String status;
     private String failedReason;
+    private String failedStackTrace;
     private String screenshotFilepath;
     private TestRun testRun;
     private ScenarioDetails scenario;
@@ -38,7 +39,8 @@ public class ScenarioResult {
     public static ScenarioResultBuilder fromTestScenario(TestScenario testScenario) {
         ScenarioResultBuilder builder = new ScenarioResultBuilder();
         builder.status(testScenario.getStatus() == null ? "" : testScenario.getStatus().toString());
-        builder.failedReason(testScenario.getFailedReason());
+        builder.failedReason(truncateFailedReason(testScenario.getFailedReason()));
+        builder.failedStackTrace(testScenario.getFailedStackTrace());
         builder.startTime(testScenario.getStart().toInstant(ZoneOffset.UTC));
         builder.endTime(testScenario.getEnd().toInstant(ZoneOffset.UTC));
         builder.screenshotFilepath(testScenario.getScreenshotFilepath());
@@ -67,5 +69,12 @@ public class ScenarioResult {
                     );
             return this;
         }
+    }
+
+    private static String truncateFailedReason(String reason) {
+        if (reason != null && reason.length() > 512) {
+            return reason.substring(0, 512);
+        }
+        return reason;
     }
 }
