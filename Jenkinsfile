@@ -44,7 +44,7 @@ properties([
             ]
         ],
         string(name: 'PARENT_BUILD_NUMBER', defaultValue: '', description: 'Parent build number for rerun'),
-        file(name: 'RERUN_FILE', description: 'Upload rerun file')
+        base64File(name: 'RERUN_FILE', description: 'Upload rerun file')
     ])
 ])
 
@@ -111,52 +111,39 @@ def runTestStage(String testReportName, String gherkinTags) {
 
 def rerunTestStage() {
     echo "=== Running Rerun Stage ==="
-    echo "Workspace = ${env. WORKSPACE}"
+    echo "Workspace = ${env.WORKSPACE}"
 
     def rerunDir = "${env.WORKSPACE}/rerun"
     sh "mkdir -p ${rerunDir}"
 
     def destinationFile = "${rerunDir}/rerunfile.txt"
 
-    // The file parameter creates a file in the workspace
-    // Try to find it directly
-    def foundFile = sh(
-        script: """
-            cd ${env.WORKSPACE}
-            find . -maxdepth 2 -name "rerunfile*. txt" -type f | head -1
-        """,
-        returnStdout: true
-    ).trim()
+    if (params.RERUN_FILE) {
+        echo "Decoding Base64 content from RERUN_FILE parameter..."
+        writeFile file: destinationFile, text: new String(params.RERUN_FILE.decodeBase64(), 'UTF-8')
+        echo "Decoded rerun file saved at: ${destinationFile}"
 
-    echo "Found file: ${foundFile}"
-
-    if (foundFile && foundFile != '') {
-        echo "Processing rerun file: ${foundFile}"
-
-        sh "cp '${foundFile}' '${destinationFile}'"
-        echo "Rerun file copied to: ${destinationFile}"
-        sh "cat '${destinationFile}'"  // Debug: show content
         sh "ls -lh ${rerunDir}"
 
         def fileExists = sh(script: "test -f '${destinationFile}' && echo true || echo false", returnStdout: true).trim()
 
         if (fileExists == 'true') {
-            // Number of Playwright runners
-            def numRunners = 2
-            echo "Splitting rerun file into ${numRunners} parts for ${numRunners} Playwright runners..."
-            sh "split -n l/${numRunners} --numeric-suffixes=0 --suffix-length=2 '${destinationFile}' '${rerunDir}/part_'"
-            sh "ls -lh ${rerunDir}"
+             // Number of Playwright runners
+             def numRunners = 2
+             echo "Splitting rerun file into ${numRunners} parts for ${numRunners} Playwright runners..."
+             sh "split -n l/${numRunners} --numeric-suffixes=0 --suffix-length=2 '${destinationFile}' '${rerunDir}/part_'"
+             sh "ls -lh ${rerunDir}"
 
-            def runnerIndex = 0
-            def partFile = String. format("%s/part_%02d", rerunDir, runnerIndex)
+              def runnerIndex = 0
+              def partFile = String.format("%s/part_%02d", rerunDir, runnerIndex)
 
-            def partExists = sh(script: "test -f '${partFile}' && echo true || echo false", returnStdout: true).trim()
-            if (partExists == 'true') {
+              def partExists = sh(script: "test -f '${partFile}' && echo true || echo false", returnStdout: true).trim()
+              if (partExists == 'true') {
                 echo "Executing ONLY part ${runnerIndex + 1} for testing: ${partFile}"
                 sh """
                     mvn --fail-never test -B \
                     -Duser.timezone=UTC \
-                    -Doracle.jdbc. timezoneAsRegion=false \
+                    -Doracle.jdbc.timezoneAsRegion=false \
                     -DresultApi.url=${env.API_BASE_URL} \
                     -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
                     -Dbrowser.headless=true \
@@ -166,14 +153,14 @@ def rerunTestStage() {
                     -Dbranch=${env.BRANCH_NAME} \
                     -Dcucumber.features=@${partFile}
                 """
-            } else {
+              } else {
                 echo "No part file found for runner index ${runnerIndex}. Skipping."
-            }
+              }
         } else {
-            echo "Rerun file not found after copying. Skipping rerun stage."
+            echo "Rerun file not found after decoding. Skipping rerun stage."
         }
     } else {
-        echo "No RERUN_FILE parameter provided.  Skipping rerun stage."
+        echo "No RERUN_FILE parameter provided. Skipping rerun stage."
     }
 
     echo "=== Rerun Stage Completed ==="
