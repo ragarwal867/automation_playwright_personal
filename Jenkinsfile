@@ -111,21 +111,31 @@ def runTestStage(String testReportName, String gherkinTags) {
 
 def rerunTestStage() {
     echo "=== Running Rerun Stage ==="
-    echo "Workspace = ${env.WORKSPACE}"
+    echo "Workspace = ${env. WORKSPACE}"
 
     def rerunDir = "${env.WORKSPACE}/rerun"
     sh "mkdir -p ${rerunDir}"
 
     def destinationFile = "${rerunDir}/rerunfile.txt"
 
-    if (params.RERUN_FILE) {
-        // With file() parameter type, params.RERUN_FILE contains the path to the uploaded file
-        echo "RERUN_FILE parameter provided:  ${params.RERUN_FILE}"
+    // The file parameter creates a file in the workspace
+    // Try to find it directly
+    def foundFile = sh(
+        script: """
+            cd ${env.WORKSPACE}
+            find . -maxdepth 2 -name "rerunfile*. txt" -type f | head -1
+        """,
+        returnStdout: true
+    ).trim()
 
-        // Copy the uploaded file to our destination
-        sh "cp '${params.RERUN_FILE}' '${destinationFile}'"
+    echo "Found file: ${foundFile}"
+
+    if (foundFile && foundFile != '') {
+        echo "Processing rerun file: ${foundFile}"
+
+        sh "cp '${foundFile}' '${destinationFile}'"
         echo "Rerun file copied to: ${destinationFile}"
-
+        sh "cat '${destinationFile}'"  // Debug: show content
         sh "ls -lh ${rerunDir}"
 
         def fileExists = sh(script: "test -f '${destinationFile}' && echo true || echo false", returnStdout: true).trim()
@@ -151,7 +161,7 @@ def rerunTestStage() {
                     -DnumberOfThreads=${params.NUMBER_OF_THREADS} \
                     -Dbrowser.headless=true \
                     -DbuildNumber=${currentBuild.number} \
-                    -Denv=${params. ENVIRONMENT} \
+                    -Denv=${params.ENVIRONMENT} \
                     -DrunType=Galileo \
                     -Dbranch=${env.BRANCH_NAME} \
                     -Dcucumber.features=@${partFile}
@@ -163,7 +173,7 @@ def rerunTestStage() {
             echo "Rerun file not found after copying. Skipping rerun stage."
         }
     } else {
-        echo "No RERUN_FILE parameter provided. Skipping rerun stage."
+        echo "No RERUN_FILE parameter provided.  Skipping rerun stage."
     }
 
     echo "=== Rerun Stage Completed ==="
