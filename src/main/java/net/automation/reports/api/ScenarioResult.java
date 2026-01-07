@@ -13,6 +13,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -45,11 +46,9 @@ public class ScenarioResult {
         builder.endTime(testScenario.getEnd().toInstant(ZoneOffset.UTC));
         builder.screenshotFilepath(testScenario.getScreenshotFilepath());
 
-
-        List<TestStep> steps = testScenario.getSteps().stream()
-                .map(step -> new TestStep(step.getName(), step.getStatus() == null ? "" : step.getStatus().toString()))
+        List<TestStep> steps = IntStream.range(0, testScenario.getSteps().size())
+                .mapToObj(i -> new TestStep(i + 1, testScenario.getSteps().get(i).getName()))
                 .toList();
-
         builder.steps(steps);
 
         return builder;

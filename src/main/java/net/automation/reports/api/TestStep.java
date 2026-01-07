@@ -7,6 +7,6 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 @JsonInclude(NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record TestStep ( String name,
-                         String status) {
+public record TestStep (Integer stepNumber,
+                         String name) {
 }
