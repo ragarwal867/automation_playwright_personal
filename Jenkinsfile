@@ -101,7 +101,7 @@ def runTestStage(String testReportName, String gherkinTags) {
         -DresultApi.url=${env.API_BASE_URL} \
         -Denv=${params.ENVIRONMENT} \
         -Dbranch=${env.BRANCH_NAME} \
-        -DrunType=Galileo \
+        -DrunType=${env.RUN_TYPE} \
         -DbuildNumber=${currentBuild.number} \
         -Dcucumber.filter.tags='${gherkinTags}' \
         -Dsysteminfo.AppName=${testReportName}
@@ -149,7 +149,7 @@ def rerunTestStage() {
                     -Dbrowser.headless=true \
                     -DbuildNumber=${currentBuild.number} \
                     -Denv=${params.ENVIRONMENT} \
-                    -DrunType=Galileo \
+                    -DrunType=${env.RUN_TYPE} \
                     -Dbranch=${env.BRANCH_NAME} \
                     -Dcucumber.features=@${partFile}
                 """
@@ -177,6 +177,7 @@ pipeline {
         GIT_SSH_COMMAND = 'ssh -o StrictHostKeyChecking=no'
         SKIP_BUILD = 'false'
         API_BASE_URL = 'http://localhost:8090/api/v1'
+        RUN_TYPE = 'Galileo'
     }
 
     options {
@@ -198,9 +199,9 @@ pipeline {
                     echo "Starting Test Run"
 
                     def payload = [
-                        runType: "Galileo",
+                        runType: env.RUN_TYPE,
                         server: params.ENVIRONMENT,
-                        branch: env.BRANCH_NAME ?: "main",
+                        branch: env.BRANCH_NAME,
                         buildNumber: currentBuild.number,
                         requestedRerun: params.REQUESTED_RERUN,
                         datetimeStart: java.time.Instant.now().toString(),
@@ -209,9 +210,9 @@ pipeline {
 
                     if (shouldRerun() && params.PARENT_BUILD_NUMBER?.trim()) {
                          payload["parentRun"] = [
-                            runType: "Galileo",
+                            runType: env.RUN_TYPE,
                             server: params.ENVIRONMENT,
-                            branch: env.BRANCH_NAME ?: "main",
+                            branch: env.BRANCH_NAME,
                             buildNumber: params.PARENT_BUILD_NUMBER,
                          ]
                     }
@@ -263,7 +264,7 @@ pipeline {
                 echo "Updating Test Run end time..."
 
                 def endPayload = [
-                    runType: "Galileo",
+                    runType: env.RUN_TYPE,
                     server: params.ENVIRONMENT,
                     branch: env.BRANCH_NAME ?: "main",
                     buildNumber: currentBuild.number,

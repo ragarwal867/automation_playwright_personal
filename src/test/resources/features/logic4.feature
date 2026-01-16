@@ -10,7 +10,6 @@ Feature: Google Search 4
     Then the page title should be "Yahoo"
     Then I close the browser
 
-  @rla
   Scenario: Logic 43
     Then I should be on homepage
     When I add the following items to cart
