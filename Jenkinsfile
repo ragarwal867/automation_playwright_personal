@@ -101,7 +101,7 @@ def runTestStage(String testReportName, String gherkinTags) {
         -DresultApi.url=${env.API_BASE_URL} \
         -Denv=${params.ENVIRONMENT} \
         -Dbranch=${env.BRANCH_NAME} \
-        -DproductType=${env.PRODUCT_TYPE} \
+        -DrunType=${env.RUN_TYPE} \
         -DbuildNumber=${currentBuild.number} \
         -Dcucumber.filter.tags='${gherkinTags}' \
         -Dsysteminfo.AppName=${testReportName}
@@ -149,7 +149,7 @@ def rerunTestStage() {
                     -Dbrowser.headless=true \
                     -DbuildNumber=${currentBuild.number} \
                     -Denv=${params.ENVIRONMENT} \
-                    -DproductType=${env.PRODUCT_TYPE} \
+                    -DrunType=${env.RUN_TYPE} \
                     -Dbranch=${env.BRANCH_NAME} \
                     -Dcucumber.features=@${partFile}
                 """
@@ -177,7 +177,7 @@ pipeline {
         GIT_SSH_COMMAND = 'ssh -o StrictHostKeyChecking=no'
         SKIP_BUILD = 'false'
         API_BASE_URL = 'http://localhost:8090/api/v1'
-        PRODUCT_TYPE = 'Galileo'
+        RUN_TYPE = 'Galileo'
     }
 
     options {
@@ -199,7 +199,7 @@ pipeline {
                     echo "Starting Test Run"
 
                     def payload = [
-                        productType: env.PRODUCT_TYPE,
+                        runType: env.RUN_TYPE,
                         server: params.ENVIRONMENT,
                         branch: env.BRANCH_NAME,
                         buildNumber: currentBuild.number,
@@ -210,7 +210,7 @@ pipeline {
 
                     if (shouldRerun() && params.PARENT_BUILD_NUMBER?.trim()) {
                          payload["parentRun"] = [
-                            productType: env.PRODUCT_TYPE,
+                            runType: env.RUN_TYPE,
                             server: params.ENVIRONMENT,
                             branch: env.BRANCH_NAME,
                             buildNumber: params.PARENT_BUILD_NUMBER,
@@ -264,7 +264,7 @@ pipeline {
                 echo "Updating Test Run end time..."
 
                 def endPayload = [
-                    productType: env.PRODUCT_TYPE,
+                    runType: env.RUN_TYPE,
                     server: params.ENVIRONMENT,
                     branch: env.BRANCH_NAME,
                     buildNumber: currentBuild.number,

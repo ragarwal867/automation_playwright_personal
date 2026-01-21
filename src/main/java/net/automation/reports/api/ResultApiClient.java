@@ -23,7 +23,7 @@ public class ResultApiClient {
     @Getter
     private static final ResultApiClient instance = new ResultApiClient();
     public static final String URL = "resultApi.url";
-    public static final String PRODUCT_TYPE = "productType";
+    public static final String RUN_TYPE = "runType";
     public static final String BUILD_NUMBER = "buildNumber";
     public static final String BUILD_ENVIRONMENT = "env";
     public static final String RUN_BRANCH = "branch";
@@ -119,7 +119,7 @@ public class ResultApiClient {
         TestRun payloadTest = new TestRun()
                 .setDatetimeStart(report.getStart().toInstant(ZoneOffset.UTC))
                 .setServer(System.getProperty(BUILD_ENVIRONMENT, "Unknown"))
-                .setProductType(System.getProperty(PRODUCT_TYPE, "Unknown"))
+                .setRunType(System.getProperty(RUN_TYPE, "Unknown"))
                 .setBranch(System.getProperty(RUN_BRANCH, "Unknown"))
                 .setBuildNumber(Integer.valueOf(System.getProperty(BUILD_NUMBER, "0")));
 
