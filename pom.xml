@@ -221,7 +221,7 @@
         <dependency>
             <artifactId>webdrivermanager</artifactId>
             <groupId>io.github.bonigarcia</groupId>
-            <version>5.6.4</version>
+            <version>6.1.0</version>
         </dependency>
         <dependency>
             <groupId>tech.grasshopper</groupId>
