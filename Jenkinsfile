@@ -176,7 +176,7 @@ pipeline {
     environment {
         GIT_SSH_COMMAND = 'ssh -o StrictHostKeyChecking=no'
         SKIP_BUILD = 'false'
-        API_BASE_URL = 'http://localhost:8090/api/v1'
+        API_BASE_URL = 'http://localhost:8091/api/v1'
         RUN_TYPE = 'Galileo'
     }
 
